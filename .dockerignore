@@ -1,0 +1,14 @@
+.git
+.agents
+.downloads
+.runtime
+.venv
+dataset_sources
+ml/data/raw
+ml/data/processed
+ml/data/splits
+ml/data/source
+ml/outputs
+__pycache__
+*.pyc
+.pytest_cache

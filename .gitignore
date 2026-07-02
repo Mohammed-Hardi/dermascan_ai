@@ -1,0 +1,32 @@
+# Downloaded datasets and temporary source checkouts
+ml/data/raw/
+dataset_sources/
+
+# Generated dataset artifacts
+ml/data/processed/
+ml/data/splits/
+ml/data/splits_three_class/
+ml/data/balanced_three_class/
+
+# Python
+.venv/
+.python/
+.downloads/
+__pycache__/
+*.py[cod]
+
+# JavaScript / React Native
+node_modules/
+.expo/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime and generated outputs
+.env
+.pytest_cache/
+.streamlit/secrets.toml
+backend/data/
+ml/outputs/
+.runtime/

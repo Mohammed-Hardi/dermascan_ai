@@ -1,0 +1,30 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DERMASCAN_INFERENCE_MODE: ${DERMASCAN_INFERENCE_MODE:-placeholder}
+      DERMASCAN_ALLOW_SMOKE_MODEL: ${DERMASCAN_ALLOW_SMOKE_MODEL:-false}
+      DERMASCAN_MODEL_PATH: /app/ml/outputs/models/dermascan-acne-eczema-psoriasis-custom-cnn.pt
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./ml/outputs/models:/app/ml/outputs/models:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    environment:
+      DERMASCAN_API_URL: http://backend:8000
+    ports:
+      - "8501:8501"
+    depends_on:
+      backend:
+        condition: service_healthy

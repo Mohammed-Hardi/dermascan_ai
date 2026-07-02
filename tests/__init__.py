@@ -1,0 +1,1 @@
+"""DermaScan AI tests."""

@@ -1,0 +1,1 @@
+"""DermaScan AI Streamlit frontend."""

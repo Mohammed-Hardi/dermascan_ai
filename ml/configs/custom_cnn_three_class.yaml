@@ -1,0 +1,33 @@
+project_name: dermascan-ai
+model_name: custom_cnn
+checkpoint_name: dermascan-three-class-custom-cnn.pt
+num_classes: 3
+class_names: [eczema, tinea, psoriasis]
+input_size: 160
+batch_size: 32
+epochs: 12
+learning_rate: 0.0005
+weight_decay: 0.0001
+early_stopping_patience: 4
+use_class_weights: true
+pretrained: false
+num_workers: 0
+seed: 42
+data:
+  train_csv: ml/data/splits_three_class/train.csv
+  val_csv: ml/data/splits_three_class/val.csv
+  test_csv: ml/data/splits_three_class/test.csv
+outputs:
+  model_dir: ml/outputs/models
+  report_dir: ml/outputs/reports/three_class
+  plot_dir: ml/outputs/plots/three_class
+augmentations:
+  crop_scale: [0.78, 1.0]
+  horizontal_flip_probability: 0.5
+  rotation_degrees: 12
+  color_jitter:
+    brightness: 0.18
+    contrast: 0.18
+    saturation: 0.12
+    hue: 0.02
+  blur_probability: 0.08

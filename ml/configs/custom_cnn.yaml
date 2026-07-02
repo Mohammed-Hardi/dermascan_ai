@@ -1,0 +1,23 @@
+project_name: dermascan-ai
+model_name: custom_cnn
+checkpoint_name: dermascan-custom-cnn.pt
+num_classes: 6
+class_names: [acne, eczema, tinea, scabies, psoriasis, other]
+input_size: 224
+batch_size: 16
+epochs: 30
+learning_rate: 0.001
+weight_decay: 0.0001
+early_stopping_patience: 5
+use_class_weights: true
+pretrained: false
+num_workers: 0
+seed: 42
+data: {train_csv: ml/data/splits/train.csv, val_csv: ml/data/splits/val.csv, test_csv: ml/data/splits/test.csv}
+outputs: {model_dir: ml/outputs/models, report_dir: ml/outputs/reports, plot_dir: ml/outputs/plots}
+augmentations:
+  crop_scale: [0.75, 1.0]
+  horizontal_flip_probability: 0.5
+  rotation_degrees: 15
+  color_jitter: {brightness: 0.2, contrast: 0.2, saturation: 0.15, hue: 0.03}
+  blur_probability: 0.1
