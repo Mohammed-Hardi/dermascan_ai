@@ -48,6 +48,41 @@ URGENT_WARNING = (
     "infected, or associated with fever."
 )
 
+# Bundled baseline keeps Streamlit Cloud informative even when generated
+# evaluation files are not deployed. Replace by committing results/model_metrics.json
+# after a full evaluation run.
+DEFAULT_PERFORMANCE_METRICS: dict[str, Any] = {
+    "model_name": "DermaScan AI prototype baseline",
+    "class_names": ["acne", "eczema", "scabies"],
+    "sample_count": 230,
+    "accuracy": 0.3913,
+    "precision": 0.3194,
+    "recall": 0.2879,
+    "f1_score": 0.2905,
+    "macro_precision": 0.3194,
+    "macro_recall": 0.2879,
+    "macro_f1": 0.2905,
+    "weighted_precision": 0.5198,
+    "weighted_recall": 0.3913,
+    "weighted_f1": 0.4375,
+    "top_3_accuracy": 1.0,
+    "validation_accuracy": 0.4673,
+    "training_accuracy": 0.5748,
+    "best_validation_loss": 0.9417,
+    "epochs_completed": 6,
+    "confusion_matrix": [
+        [74, 43, 34],
+        [15, 13, 18],
+        [13, 17, 3],
+    ],
+    "per_class": {
+        "acne": {"precision": 0.7255, "recall": 0.4901, "f1_score": 0.5850, "support": 151},
+        "eczema": {"precision": 0.1781, "recall": 0.2826, "f1_score": 0.2185, "support": 46},
+        "scabies": {"precision": 0.0545, "recall": 0.0909, "f1_score": 0.0682, "support": 33},
+    },
+    "source_note": "Bundled prototype baseline shown for the hosted demo.",
+}
+
 
 @dataclass(slots=True)
 class SelectedImage:
@@ -180,6 +215,9 @@ def render_model_metrics(info: dict[str, Any] | None, title: str = "Model Perfor
             unsafe_allow_html=True,
         )
         return
+    source_note = metrics.get("source_note")
+    if source_note:
+        st.markdown(f'<div class="status-note"><strong>Metrics source:</strong> {escape(str(source_note))}</div>', unsafe_allow_html=True)
 
     cards = "".join(
         f'<div class="metric-card"><span>{escape(label)}</span><strong>{_format_metric(value)}</strong></div>'
@@ -236,7 +274,37 @@ def _read_performance_metrics() -> dict[str, Any] | None:
         metrics = _load_json(path)
         if metrics:
             return metrics
-    return None
+    return DEFAULT_PERFORMANCE_METRICS
+
+
+def _classification_report_dataframe(metrics: dict[str, Any]) -> pd.DataFrame:
+    per_class = metrics.get("per_class") or {}
+    rows: list[dict[str, Any]] = []
+    for class_name, values in per_class.items():
+        if not isinstance(values, dict):
+            continue
+        rows.append(
+            {
+                "class_name": class_name,
+                "precision": values.get("precision"),
+                "recall": values.get("recall", values.get("recall_sensitivity")),
+                "f1_score": values.get("f1_score"),
+                "support": values.get("support"),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def _confusion_matrix_dataframe(metrics: dict[str, Any], normalized: bool = False) -> pd.DataFrame | None:
+    matrix = metrics.get("confusion_matrix")
+    class_names = metrics.get("class_names") or ["acne", "eczema", "scabies"]
+    if not matrix:
+        return None
+    frame = pd.DataFrame(matrix, index=[name.title() for name in class_names], columns=[name.title() for name in class_names])
+    if normalized:
+        row_sums = frame.sum(axis=1).replace(0, 1)
+        frame = frame.div(row_sums, axis=0).round(3)
+    return frame
 
 
 def _performance_file(name: str) -> Path | None:
@@ -318,6 +386,15 @@ def render_home() -> None:
             <p>Upload a clear image, crop the area of concern, and review AI prediction probabilities with caution.</p>
           </div>
         </section>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        """
+        <div class="welcome-card">
+          <h3>Welcome to DermaScan AI</h3>
+          <p>This platform helps you upload a skin image, crop the area of concern, view an AI-assisted educational prediction, and review model performance metrics in one place.</p>
+        </div>
         """,
         unsafe_allow_html=True,
     )
@@ -446,10 +523,9 @@ def render_performance() -> None:
         unsafe_allow_html=True,
     )
     metrics = _read_performance_metrics()
-    if not metrics:
-        st.warning("Model evaluation results are not available yet. Run python src/evaluate_model.py first.")
-        render_disclaimer()
-        return
+    source_note = metrics.get("source_note")
+    if source_note:
+        st.markdown(f'<div class="status-note"><strong>Metrics source:</strong> {escape(str(source_note))}</div>', unsafe_allow_html=True)
 
     metric_columns = st.columns(6)
     metric_specs = [
@@ -471,13 +547,21 @@ def render_performance() -> None:
         if confusion_path:
             st.image(str(confusion_path), width="stretch")
         else:
-            st.info("confusion_matrix.png is missing.")
+            matrix_frame = _confusion_matrix_dataframe(metrics)
+            if matrix_frame is not None:
+                st.dataframe(matrix_frame, use_container_width=True)
+            else:
+                st.info("Confusion matrix data is not available.")
     with image_b:
         st.markdown("### Normalized Confusion Matrix")
         if normalized_path:
             st.image(str(normalized_path), width="stretch")
         else:
-            st.info("confusion_matrix_normalized.png is missing.")
+            normalized_frame = _confusion_matrix_dataframe(metrics, normalized=True)
+            if normalized_frame is not None:
+                st.dataframe(normalized_frame, use_container_width=True)
+            else:
+                st.info("Normalized confusion matrix data is not available.")
 
     st.markdown(
         """
@@ -494,7 +578,11 @@ def render_performance() -> None:
     if report_path:
         st.dataframe(pd.read_csv(report_path), use_container_width=True)
     else:
-        st.info("classification_report.csv is missing.")
+        report_frame = _classification_report_dataframe(metrics)
+        if not report_frame.empty:
+            st.dataframe(report_frame, use_container_width=True)
+        else:
+            st.info("Classification report data is not available.")
     render_disclaimer()
 
 

@@ -147,6 +147,27 @@ h1, h2, h3 {
   color: white;
 }
 
+.welcome-card {
+  margin: 1.2rem 0;
+  padding: 1.3rem 1.5rem;
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--blue);
+  border-radius: 18px;
+  background: #f4f8ff;
+  box-shadow: 0 14px 30px rgba(7, 33, 88, 0.07);
+}
+
+.welcome-card h3 {
+  margin: 0 0 0.35rem;
+  color: var(--navy);
+}
+
+.welcome-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 .page-heading-card {
   margin: 1rem 0 1.2rem;
   padding: 1.5rem;
@@ -691,14 +712,22 @@ h1, h2, h3 {
 }
 
 div.stButton > button, div.stDownloadButton > button {
-  min-height: 3.05rem;
+  min-height: 3.45rem;
   border-radius: 999px;
   border: 1px solid var(--blue);
   background: var(--blue);
   color: white;
   font-weight: 850;
-  padding: 0.65rem 1.3rem;
+  font-size: 1rem;
+  padding: 0.75rem 1.6rem;
   transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+
+div.stButton > button[kind="primary"] {
+  min-height: 4.1rem;
+  min-width: 15rem;
+  font-size: 1.12rem;
+  box-shadow: 0 16px 32px rgba(52, 127, 226, 0.24);
 }
 
 div.stButton > button:hover, div.stDownloadButton > button:hover {

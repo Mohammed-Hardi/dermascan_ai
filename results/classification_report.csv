@@ -1,0 +1,4 @@
+class_name,precision,recall,f1_score,support
+acne,0.7255,0.4901,0.5850,151
+eczema,0.1781,0.2826,0.2185,46
+scabies,0.0545,0.0909,0.0682,33

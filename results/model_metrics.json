@@ -1,0 +1,62 @@
+{
+  "model_name": "DermaScan AI prototype baseline",
+  "class_names": [
+    "acne",
+    "eczema",
+    "scabies"
+  ],
+  "sample_count": 230,
+  "accuracy": 0.3913,
+  "precision": 0.3194,
+  "recall": 0.2879,
+  "f1_score": 0.2905,
+  "macro_precision": 0.3194,
+  "macro_recall": 0.2879,
+  "macro_f1": 0.2905,
+  "weighted_precision": 0.5198,
+  "weighted_recall": 0.3913,
+  "weighted_f1": 0.4375,
+  "top_3_accuracy": 1.0,
+  "validation_accuracy": 0.4673,
+  "training_accuracy": 0.5748,
+  "best_validation_loss": 0.9417,
+  "epochs_completed": 6,
+  "confusion_matrix": [
+    [
+      74,
+      43,
+      34
+    ],
+    [
+      15,
+      13,
+      18
+    ],
+    [
+      13,
+      17,
+      3
+    ]
+  ],
+  "per_class": {
+    "acne": {
+      "precision": 0.7255,
+      "recall": 0.4901,
+      "f1_score": 0.585,
+      "support": 151
+    },
+    "eczema": {
+      "precision": 0.1781,
+      "recall": 0.2826,
+      "f1_score": 0.2185,
+      "support": 46
+    },
+    "scabies": {
+      "precision": 0.0545,
+      "recall": 0.0909,
+      "f1_score": 0.0682,
+      "support": 33
+    }
+  },
+  "source_note": "Bundled prototype baseline shown for the hosted demo."
+}
