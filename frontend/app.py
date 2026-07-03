@@ -147,23 +147,34 @@ def _format_metric(value: Any) -> str:
     return f"{number:.3g}"
 
 
-def render_model_metrics(info: dict[str, Any] | None) -> None:
-    if not info:
-        return
-    metrics = info.get("metrics") or {}
+def render_model_metrics(info: dict[str, Any] | None, title: str = "Model Performance Metrics") -> None:
+    performance_metrics = _read_performance_metrics() or {}
+    info_metrics = (info or {}).get("metrics") or {}
+    metrics = {**info_metrics, **performance_metrics}
     metric_items = [
         ("Accuracy", metrics.get("accuracy")),
+        ("Precision", metrics.get("precision")),
+        ("Recall", metrics.get("recall")),
+        ("F1-score", metrics.get("f1_score")),
+        ("Macro Precision", metrics.get("macro_precision")),
         ("Macro F1", metrics.get("macro_f1")),
         ("Macro Recall", metrics.get("macro_recall")),
+        ("Weighted Precision", metrics.get("weighted_precision")),
+        ("Weighted Recall", metrics.get("weighted_recall")),
+        ("Weighted F1", metrics.get("weighted_f1")),
         ("Val Accuracy", metrics.get("validation_accuracy")),
+        ("Training Accuracy", metrics.get("training_accuracy")),
         ("Top-3 Accuracy", metrics.get("top_3_accuracy")),
+        ("Best Val Loss", metrics.get("best_validation_loss")),
+        ("Epochs", metrics.get("epochs_completed")),
     ]
     metric_items = [(label, value) for label, value in metric_items if value is not None]
+    st.markdown(f'<h2 class="section-title">{escape(title)}</h2>', unsafe_allow_html=True)
     if not metric_items:
         st.markdown(
             """
             <div class="model-metrics">
-              <div class="metric-card"><span>Model Metrics</span><strong>N/A</strong><p>No saved evaluation metrics found for this checkpoint.</p></div>
+              <div class="metric-card"><span>Accuracy</span><strong>N/A</strong><p>No saved evaluation metrics found. Run python src/evaluate_model.py to generate full metrics.</p></div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -172,7 +183,7 @@ def render_model_metrics(info: dict[str, Any] | None) -> None:
 
     cards = "".join(
         f'<div class="metric-card"><span>{escape(label)}</span><strong>{_format_metric(value)}</strong></div>'
-        for label, value in metric_items[:4]
+        for label, value in metric_items
     )
     st.markdown(f'<div class="model-metrics">{cards}</div>', unsafe_allow_html=True)
 
@@ -630,7 +641,6 @@ def render_result() -> None:
         unsafe_allow_html=True,
     )
     model_info = render_model_notice()
-    render_model_metrics(model_info)
     top = result.get("top_prediction")
     if top:
         name = escape(top["class_name"].title())
@@ -660,6 +670,7 @@ def render_result() -> None:
     if top:
         st.metric("AI Prediction Confidence", f"{confidence_value:.1f}%")
     render_probability_chart(result.get("top_k", []))
+    render_model_metrics(model_info, "Model Performance After Analysis")
 
     rows = "".join(
         f'<div class="prediction-row"><span>{escape(item["class_name"].title())}</span><span>{item["confidence"] * 100:.1f}%</span></div>'
