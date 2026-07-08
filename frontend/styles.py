@@ -171,6 +171,57 @@ p, label, .stMarkdown {
 /* ============================================================
    HERO SECTION — Full-bleed Aidoc style (dark blue + doctor bg)
    ============================================================ */
+.landing-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 12% 14%, rgba(32, 135, 255, 0.65), transparent 34%),
+    linear-gradient(120deg, #030c43 0%, #0b4da2 48%, #02082f 100%);
+}
+
+.landing-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 36%;
+  opacity: 0.28;
+  filter: saturate(1.12) contrast(1.1);
+}
+
+.landing-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(3, 12, 67, 0.93), rgba(11, 77, 162, 0.82), rgba(2, 8, 47, 0.94)),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.08), transparent 30%);
+}
+
+.brand-bar,
+.hero-fullbleed,
+.welcome-split,
+.clinical-gallery,
+.stats-strip,
+.section-header,
+.disease-grid,
+.workflow-grid,
+.warning-card,
+[data-testid="stButton"] {
+  position: relative;
+  z-index: 1;
+}
+
+.brand-bar {
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-radius: 0 0 16px 16px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+}
+
 .hero-fullbleed {
   position: relative;
   isolation: isolate;
@@ -264,10 +315,15 @@ p, label, .stMarkdown {
   grid-template-columns: 1fr 1fr;
   gap: 3rem;
   align-items: center;
-  margin: 0 -1.5rem;
+  margin: 1.5rem -1.5rem 1.25rem;
   padding: 3.5rem 8%;
-  background: linear-gradient(135deg, var(--bg-white) 0%, var(--bg-faint-blue) 100%);
-  border-bottom: 1px solid var(--border-card);
+  background:
+    linear-gradient(135deg, rgba(4, 24, 95, 0.92), rgba(11, 77, 162, 0.78)),
+    radial-gradient(circle at 90% 12%, rgba(255, 255, 255, 0.16), transparent 28%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(2, 8, 47, 0.28);
+  backdrop-filter: blur(8px);
 }
 
 .welcome-split-text {
@@ -295,13 +351,13 @@ p, label, .stMarkdown {
 .welcome-split-text h2 {
   font-size: clamp(1.6rem, 3vw, 2.4rem);
   font-weight: 600;
-  color: var(--navy-deep);
+  color: #fff;
   line-height: 1.2;
   margin: 0;
 }
 
 .welcome-split-text p {
-  color: var(--slate-medium);
+  color: rgba(255, 255, 255, 0.82);
   font-size: 1rem;
   line-height: 1.7;
   margin: 0 0 1.8rem;
@@ -312,10 +368,10 @@ p, label, .stMarkdown {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--slate-medium);
+  color: rgba(255, 255, 255, 0.82);
   font-size: 0.85rem;
   padding-top: 1.2rem;
-  border-top: 1px solid var(--border-card);
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
 }
 
 .welcome-split-text .trusted-note::before {
@@ -348,23 +404,24 @@ p, label, .stMarkdown {
   align-items: center;
   margin: 2rem 0 2.6rem;
   padding: 2rem;
-  border: 1px solid var(--border-card);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 16px;
   background:
-    linear-gradient(135deg, rgba(245, 249, 255, 0.94), rgba(255, 255, 255, 0.98)),
-    radial-gradient(circle at 12% 20%, rgba(41, 82, 137, 0.16), transparent 32%);
-  box-shadow: var(--shadow-2);
+    linear-gradient(135deg, rgba(4, 24, 95, 0.90), rgba(11, 77, 162, 0.72)),
+    radial-gradient(circle at 12% 20%, rgba(255, 255, 255, 0.14), transparent 32%);
+  box-shadow: 0 22px 50px rgba(2, 8, 47, 0.24);
+  backdrop-filter: blur(8px);
 }
 
 .clinical-gallery-copy h3 {
   font-size: clamp(1.55rem, 2.4vw, 2.25rem);
-  color: var(--navy-deep);
+  color: #fff;
   letter-spacing: -0.04em;
   margin-bottom: 0.75rem;
 }
 
 .clinical-gallery-copy p {
-  color: var(--slate-medium);
+  color: rgba(255, 255, 255, 0.82);
   margin: 0;
   max-width: 28rem;
   line-height: 1.7;
@@ -430,16 +487,17 @@ p, label, .stMarkdown {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1px;
-  background: var(--border-card);
-  border: 1px solid var(--border-card);
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 12px;
   overflow: hidden;
   margin: 2rem 0;
-  box-shadow: var(--shadow-1);
+  box-shadow: 0 18px 44px rgba(2, 8, 47, 0.22);
+  backdrop-filter: blur(8px);
 }
 
 .stat-cell {
-  background: var(--bg-white);
+  background: rgba(4, 24, 95, 0.72);
   padding: 1.4rem 1.5rem;
   text-align: center;
 }
@@ -448,14 +506,14 @@ p, label, .stMarkdown {
   display: block;
   font-size: 2rem;
   font-weight: 600;
-  color: var(--btn-blue);
+  color: #fff;
   line-height: 1;
   margin-bottom: 0.3rem;
 }
 
 .stat-label {
   font-size: 0.85rem;
-  color: var(--slate-medium);
+  color: rgba(255, 255, 255, 0.78);
 }
 
 /* ============================================================
@@ -475,6 +533,24 @@ p, label, .stMarkdown {
 .section-header p {
   color: var(--slate-medium);
   font-size: 0.98rem;
+}
+
+.landing-section-header {
+  padding: 1.2rem 1.4rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(4, 24, 95, 0.72);
+  box-shadow: 0 16px 38px rgba(2, 8, 47, 0.20);
+  backdrop-filter: blur(8px);
+}
+
+.landing-section-header h2 {
+  color: #fff;
+}
+
+.landing-section-header p {
+  color: rgba(255, 255, 255, 0.80);
+  margin: 0;
 }
 
 .section-title {
@@ -527,6 +603,16 @@ p, label, .stMarkdown {
   border-top: 3px solid var(--orange-primary);
 }
 
+.disease-card,
+.workflow-grid .info-card {
+  border-color: rgba(255, 255, 255, 0.18);
+  background:
+    linear-gradient(160deg, rgba(5, 27, 105, 0.88), rgba(11, 77, 162, 0.66)),
+    radial-gradient(circle at 90% 10%, rgba(255, 255, 255, 0.14), transparent 26%);
+  box-shadow: 0 18px 44px rgba(2, 8, 47, 0.22);
+  backdrop-filter: blur(8px);
+}
+
 .disease-card h3,
 .info-card h3,
 .result-card h3,
@@ -537,6 +623,11 @@ p, label, .stMarkdown {
   margin-bottom: 0.5rem;
 }
 
+.disease-card h3,
+.workflow-grid .info-card h3 {
+  color: #fff;
+}
+
 .disease-card p,
 .info-card p,
 .result-card p,
@@ -544,6 +635,11 @@ p, label, .stMarkdown {
   color: var(--slate-medium);
   line-height: 1.6;
   font-size: 0.95rem;
+}
+
+.disease-card p,
+.workflow-grid .info-card p {
+  color: rgba(255, 255, 255, 0.80);
 }
 
 /* Step number badge inside info cards */
@@ -559,6 +655,11 @@ p, label, .stMarkdown {
   font-size: 0.82rem;
   font-weight: 600;
   margin-bottom: 0.6rem;
+}
+
+.workflow-grid .info-card strong {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
 }
 
 /* Accent card variant (dark navy) */
@@ -639,6 +740,15 @@ p, label, .stMarkdown {
   color: var(--warning-text);
   font-size: 0.95rem;
   line-height: 1.6;
+}
+
+.landing-warning-card {
+  border-color: rgba(255, 255, 255, 0.20);
+  border-left-color: var(--orange-primary);
+  background: rgba(4, 24, 95, 0.78);
+  color: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 16px 38px rgba(2, 8, 47, 0.20);
+  backdrop-filter: blur(8px);
 }
 
 .disclaimer {

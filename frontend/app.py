@@ -381,19 +381,24 @@ def render_home() -> None:
         _asset_data_uri("landing-derm-04.jpg"),
     ]
 
-    # ── Hero — full-bleed Aidoc style ─────────────────────────
     st.markdown(
-        f'<div class="hero-fullbleed"><img class="hero-bg-img" src="{hero_image}" alt="Doctor using digital healthcare tools"><h1>AI Solutions Deliver<br>Smarter Skin Screening</h1><p>The pressure on medical professionals to provide quality and effective care is enormous. DermaScan AI uses deep learning to help support dermatological triage for {escape(classes_display)} and turns images into actionable educational insights.</p><a class="hero-cta-btn" href="#scan-start">SEE THE SOLUTION</a></div>',
+        f'<div class="landing-bg"><img src="{hero_image}" alt="Dermatology AI background"></div>',
         unsafe_allow_html=True,
     )
 
     # ── Split welcome section (Aidoc "See what matters" style) ─
     st.markdown(
-        '<div class="welcome-split"><div class="welcome-split-text"><div class="headline-wrap"><span class="orange-bar"></span><h2>See what matters.<br>Less noise. More focus.</h2></div><p>Turning clinical image data and AI signals into actionable educational insights that support efficiency and better-informed care decisions.</p><div class="trusted-note">Educational and decision support tool only, not a medical diagnosis</div></div><div class="welcome-split-image"></div></div><div id="scan-start"></div>',
+        '<div class="welcome-split landing-card-panel"><div class="welcome-split-text"><div class="headline-wrap"><span class="orange-bar"></span><h2>Welcome to DermaScan AI.<br>Clear support for skin screening.</h2></div><p>Start here: upload or capture a skin image, crop the area you want checked, and review an educational AI result designed to support safer dermatology decisions.</p><div class="trusted-note">Educational and decision support tool only, not a medical diagnosis</div></div><div class="welcome-split-image"></div></div><div id="scan-start"></div>',
         unsafe_allow_html=True,
     )
     if st.button("Get started →", type="primary"):
         navigate("scan")
+
+    # ── Hero — full-bleed Aidoc style ─────────────────────────
+    st.markdown(
+        f'<div class="hero-fullbleed"><img class="hero-bg-img" src="{hero_image}" alt="Doctor using digital healthcare tools"><h1>AI Solutions Deliver<br>Smarter Skin Screening</h1><p>The pressure on medical professionals to provide quality and effective care is enormous. DermaScan AI uses deep learning to help support dermatological triage for {escape(classes_display)} and turns images into actionable educational insights.</p><a class="hero-cta-btn" href="#scan-start">SEE THE SOLUTION</a></div>',
+        unsafe_allow_html=True,
+    )
 
     st.markdown(
         '<div class="clinical-gallery"><div class="clinical-gallery-copy"><h3>Clinical photos, calmer decisions.</h3><p>Dermatology workflows depend on clear visual review. These clinical images create the same calm healthcare style as your reference design while keeping the project focused on screening support.</p></div><div class="clinical-gallery-grid" aria-label="Dermatology consultation image gallery">'
@@ -430,7 +435,7 @@ def render_home() -> None:
     # ── Supported conditions ──────────────────────────────────
     st.markdown(
         """
-        <div class="section-header">
+        <div class="section-header landing-section-header">
           <h2>Supported Conditions</h2>
           <p>The model is trained to classify the following skin conditions.</p>
         </div>
@@ -446,7 +451,7 @@ def render_home() -> None:
     # ── How it works ──────────────────────────────────────────
     st.markdown(
         """
-        <div class="section-header">
+        <div class="section-header landing-section-header">
           <h2>How It Works</h2>
           <p>Three simple steps to receive an educational AI prediction.</p>
         </div>
@@ -467,7 +472,7 @@ def render_home() -> None:
             <p>See the possible condition, confidence score, probability breakdown, and next-step safety guidance.</p>
           </div>
         </div>
-        <div class="warning-card">
+        <div class="warning-card landing-warning-card">
           <strong>⚠ Educational use only:</strong> This system is not a medical diagnosis.
           Please consult a qualified health professional for diagnosis and treatment.
         </div>
@@ -649,6 +654,9 @@ def render_about() -> None:
 
 def render_scan() -> None:
     render_brand()
+    if st.button("← Back to landing page", key="back-to-landing"):
+        navigate("home")
+
     model_info = render_model_notice()
     class_names = _supported_classes(model_info)
 
@@ -682,7 +690,6 @@ def render_scan() -> None:
         cropped_image = None
         if selected:
             cropped_image = _render_cropper(selected)
-            render_model_metrics(model_info)
         else:
             st.markdown(
                 """
@@ -708,6 +715,7 @@ def render_scan() -> None:
                 sex = st.selectbox("Sex", ["", "Female", "Male", "Prefer not to say"])
                 symptom_duration = st.text_input("Symptom duration", placeholder="For example: 2 weeks")
 
+        render_model_metrics(model_info)
         consent = st.checkbox("I understand this tool is not a diagnosis.")
         analyze_disabled = cropped_image is None or not consent
         if st.button("Analyze Image", type="primary", use_container_width=True, disabled=analyze_disabled):
