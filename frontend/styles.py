@@ -5,15 +5,9 @@ import streamlit as st
 
 
 ASSET_DIR = Path(__file__).resolve().parent / "assets"
-HERO_BACKGROUND     = ASSET_DIR / "hero-derma-scan.png"
 SCAN_BACKGROUND     = ASSET_DIR / "scan-page-bg.png"
 HERO_DOCTOR_BG      = ASSET_DIR / "hero-dermatologist-bg.png"
 DOCTOR_AT_WORK      = ASSET_DIR / "dermatologist-at-work.png"
-LANDING_HERO        = ASSET_DIR / "landing-hero-clinical.jpg"
-LANDING_DERM_01     = ASSET_DIR / "landing-derm-01.jpg"
-LANDING_DERM_02     = ASSET_DIR / "landing-derm-02.jpg"
-LANDING_DERM_03     = ASSET_DIR / "landing-derm-03.jpg"
-LANDING_DERM_04     = ASSET_DIR / "landing-derm-04.jpg"
 
 
 def _image_layer(path: Path, mime_type: str) -> str:
@@ -179,6 +173,7 @@ p, label, .stMarkdown {
    ============================================================ */
 .hero-fullbleed {
   position: relative;
+  isolation: isolate;
   overflow: hidden;
   /* no border-radius — extends edge to edge within Streamlit's container */
   margin: 1.5rem -1.5rem 0;
@@ -189,17 +184,35 @@ p, label, .stMarkdown {
   align-items: center;
   justify-content: center;
   text-align: center;
-  background:
-    radial-gradient(circle at 16% 18%, rgba(32, 135, 255, 0.62), transparent 34%),
-    linear-gradient(100deg, rgba(3, 12, 67, 0.95) 0%, rgba(5, 27, 105, 0.88) 48%, rgba(6, 12, 64, 0.78) 100%),
-    __LANDING_HERO__;
-  background-size: cover;
-  background-position: center 38%;
+  background: var(--navy-deep);
   color: #fff;
   box-shadow: var(--shadow-4);
 }
 
+.hero-fullbleed::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    radial-gradient(circle at 16% 18%, rgba(32, 135, 255, 0.62), transparent 34%),
+    linear-gradient(100deg, rgba(3, 12, 67, 0.95) 0%, rgba(5, 27, 105, 0.88) 48%, rgba(6, 12, 64, 0.78) 100%);
+}
+
+.hero-bg-img {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 38%;
+  filter: saturate(1.05) contrast(1.05);
+}
+
 .hero-fullbleed h1 {
+  position: relative;
+  z-index: 2;
   font-size: clamp(2rem, 4.5vw, 3.2rem);
   font-weight: 600;
   color: #fff;
@@ -209,6 +222,8 @@ p, label, .stMarkdown {
 }
 
 .hero-fullbleed p {
+  position: relative;
+  z-index: 2;
   font-size: 1rem;
   color: rgba(255,255,255,0.82);
   line-height: 1.7;
@@ -217,6 +232,8 @@ p, label, .stMarkdown {
 }
 
 .hero-cta-btn {
+  position: relative;
+  z-index: 2;
   display: inline-block;
   padding: 14px 36px;
   background: var(--orange-primary);
@@ -389,10 +406,12 @@ p, label, .stMarkdown {
   animation-delay: -4s;
 }
 
-.clinical-shot-1 { background-image: __LANDING_DERM_01__; }
-.clinical-shot-2 { background-image: __LANDING_DERM_02__; }
-.clinical-shot-3 { background-image: __LANDING_DERM_03__; }
-.clinical-shot-4 { background-image: __LANDING_DERM_04__; }
+.clinical-shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 
 @keyframes clinical-float {
   0%, 100% { translate: 0 0; filter: saturate(0.96); }
@@ -1159,13 +1178,7 @@ div.stButton > button:disabled {
 
 
 def apply_styles() -> None:
-    css = APP_CSS.replace("__HERO_BACKGROUND__",  _image_layer(HERO_BACKGROUND,  "image/png"))
-    css = css.replace("__SCAN_BACKGROUND__",      _image_layer(SCAN_BACKGROUND,   "image/png"))
+    css = APP_CSS.replace("__SCAN_BACKGROUND__",  _image_layer(SCAN_BACKGROUND,   "image/png"))
     css = css.replace("__HERO_DOCTOR_BG__",       _image_layer(HERO_DOCTOR_BG,    "image/png"))
     css = css.replace("__DOCTOR_AT_WORK__",       _image_layer(DOCTOR_AT_WORK,    "image/png"))
-    css = css.replace("__LANDING_HERO__",         _image_layer(LANDING_HERO,      "image/jpeg"))
-    css = css.replace("__LANDING_DERM_01__",      _image_layer(LANDING_DERM_01,   "image/jpeg"))
-    css = css.replace("__LANDING_DERM_02__",      _image_layer(LANDING_DERM_02,   "image/jpeg"))
-    css = css.replace("__LANDING_DERM_03__",      _image_layer(LANDING_DERM_03,   "image/jpeg"))
-    css = css.replace("__LANDING_DERM_04__",      _image_layer(LANDING_DERM_04,   "image/jpeg"))
     st.markdown(css, unsafe_allow_html=True)

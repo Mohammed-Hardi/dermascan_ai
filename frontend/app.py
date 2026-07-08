@@ -28,6 +28,8 @@ from frontend.styles import apply_styles
 
 
 RESULTS_DIR = PROJECT_ROOT / "results"
+ASSET_DIR = PROJECT_ROOT / "frontend" / "assets"
+SUPPORTED_CLASSES = ["acne", "eczema", "psoriasis"]
 
 DISCLAIMER = (
     "The scan result is not a diagnosis. For accurate diagnosis and treatment "
@@ -39,6 +41,23 @@ DISEASE_DESCRIPTIONS = {
     "eczema": "Eczema may show dry, itchy, cracked, irritated, or inflamed patches. The AI compares dryness, scaling, redness or darkening, and patch-like irritation across skin tones.",
     "psoriasis": "Psoriasis may show raised, scaly, itchy, or inflamed plaques. The AI compares scale, plaque-like texture, and clearly bounded patch patterns.",
 }
+
+
+def _supported_classes(info: dict[str, Any] | None = None) -> list[str]:
+    """Keep the public UI aligned with the trained three-class model."""
+    active = (info or {}).get("classes") or SUPPORTED_CLASSES
+    normalized = [str(name).strip().lower() for name in active]
+    if set(normalized) != set(SUPPORTED_CLASSES):
+        return SUPPORTED_CLASSES
+    return [name for name in SUPPORTED_CLASSES if name in normalized]
+
+
+def _asset_data_uri(filename: str, mime_type: str = "image/jpeg") -> str:
+    path = ASSET_DIR / filename
+    if not path.exists():
+        return ""
+    encoded = b64encode(path.read_bytes()).decode("ascii")
+    return f"data:{mime_type};base64,{encoded}"
 
 URGENT_WARNING = (
     "Seek urgent medical care if the rash is rapidly spreading, painful, bleeding, "
@@ -265,7 +284,9 @@ def _classification_report_dataframe(metrics: dict[str, Any]) -> pd.DataFrame:
 
 def _confusion_matrix_dataframe(metrics: dict[str, Any], normalized: bool = False) -> pd.DataFrame | None:
     matrix = metrics.get("confusion_matrix")
-    class_names = metrics.get("class_names") or ["acne", "eczema", "psoriasis"]
+    class_names = metrics.get("class_names") or SUPPORTED_CLASSES
+    if set(str(name).lower() for name in class_names) != set(SUPPORTED_CLASSES):
+        class_names = SUPPORTED_CLASSES
     if not matrix:
         return None
     frame = pd.DataFrame(
@@ -350,59 +371,38 @@ def render_probability_chart(top_k: list[dict[str, Any]]) -> None:
 def render_home() -> None:
     render_brand()
     model_info = get_model_info()
-    class_names = (model_info or {}).get("classes") or ["acne", "eczema", "psoriasis"]
+    class_names = _supported_classes(model_info)
     classes_display = ", ".join(name.title() for name in class_names)
+    hero_image = _asset_data_uri("landing-hero-clinical.jpg")
+    gallery_images = [
+        _asset_data_uri("landing-derm-01.jpg"),
+        _asset_data_uri("landing-derm-02.jpg"),
+        _asset_data_uri("landing-derm-03.jpg"),
+        _asset_data_uri("landing-derm-04.jpg"),
+    ]
 
     # ── Hero — full-bleed Aidoc style ─────────────────────────
     st.markdown(
-        f"""
-        <section class="hero-fullbleed">
-          <h1>AI Solutions Deliver<br>Smarter Skin Screening</h1>
-          <p>The pressure on medical professionals to provide quality and effective care is enormous.
-             DermaScan AI uses deep learning to help support dermatological triage for
-             {classes_display} — turning images into actionable educational insights.</p>
-          <a class="hero-cta-btn" href="#">SEE THE SOLUTION</a>
-        </section>
-        """,
+        f'<div class="hero-fullbleed"><img class="hero-bg-img" src="{hero_image}" alt="Doctor using digital healthcare tools"><h1>AI Solutions Deliver<br>Smarter Skin Screening</h1><p>The pressure on medical professionals to provide quality and effective care is enormous. DermaScan AI uses deep learning to help support dermatological triage for {escape(classes_display)} and turns images into actionable educational insights.</p><a class="hero-cta-btn" href="#scan-start">SEE THE SOLUTION</a></div>',
         unsafe_allow_html=True,
     )
 
     # ── Split welcome section (Aidoc "See what matters" style) ─
     st.markdown(
-        """
-        <section class="welcome-split">
-          <div class="welcome-split-text">
-            <div class="headline-wrap">
-              <span class="orange-bar"></span>
-              <h2>See what matters.<br>Less noise. More focus.</h2>
-            </div>
-            <p>Turning clinical image data and AI signals into actionable educational insights
-               that support efficiency and better-informed care decisions.</p>
-            <div class="trusted-note">✦ Educational &amp; decision support tool only — not a medical diagnosis</div>
-          </div>
-          <div class="welcome-split-image"></div>
-        </section>
-        """,
+        '<div class="welcome-split"><div class="welcome-split-text"><div class="headline-wrap"><span class="orange-bar"></span><h2>See what matters.<br>Less noise. More focus.</h2></div><p>Turning clinical image data and AI signals into actionable educational insights that support efficiency and better-informed care decisions.</p><div class="trusted-note">Educational and decision support tool only, not a medical diagnosis</div></div><div class="welcome-split-image"></div></div><div id="scan-start"></div>',
         unsafe_allow_html=True,
     )
     if st.button("Get started →", type="primary"):
         navigate("scan")
 
     st.markdown(
-        """
-        <section class="clinical-gallery">
-          <div class="clinical-gallery-copy">
-            <h3>Clinical photos, calmer decisions.</h3>
-            <p>Dermatology workflows depend on clear visual review. This landing section uses a rotating set of clinical images to communicate patient care, screening support, and AI-assisted focus.</p>
-          </div>
-          <div class="clinical-gallery-grid" aria-label="Dermatology consultation image gallery">
-            <div class="clinical-shot clinical-shot-1"></div>
-            <div class="clinical-shot clinical-shot-2"></div>
-            <div class="clinical-shot clinical-shot-3"></div>
-            <div class="clinical-shot clinical-shot-4"></div>
-          </div>
-        </section>
-        """,
+        '<div class="clinical-gallery"><div class="clinical-gallery-copy"><h3>Clinical photos, calmer decisions.</h3><p>Dermatology workflows depend on clear visual review. These clinical images create the same calm healthcare style as your reference design while keeping the project focused on screening support.</p></div><div class="clinical-gallery-grid" aria-label="Dermatology consultation image gallery">'
+        + "".join(
+            f'<div class="clinical-shot"><img src="{image_uri}" alt="Clinical dermatology support image"></div>'
+            for image_uri in gallery_images
+            if image_uri
+        )
+        + "</div></div>",
         unsafe_allow_html=True,
     )
 
@@ -438,12 +438,7 @@ def render_home() -> None:
         unsafe_allow_html=True,
     )
     cards = "".join(
-        f"""
-        <div class="disease-card">
-          <h3>{escape(class_name.title())}</h3>
-          <p>{escape(DISEASE_DESCRIPTIONS.get(class_name, "Supported model class for educational screening."))}</p>
-        </div>
-        """
+        f'<div class="disease-card"><h3>{escape(class_name.title())}</h3><p>{escape(DISEASE_DESCRIPTIONS.get(class_name, "Supported model class for educational screening."))}</p></div>'
         for class_name in class_names
     )
     st.markdown(f'<div class="disease-grid">{cards}</div>', unsafe_allow_html=True)
@@ -622,7 +617,7 @@ def render_performance() -> None:
 def render_about() -> None:
     render_brand()
     model_info = get_model_info() or {}
-    classes = ", ".join(name.title() for name in model_info.get("classes", [])) or "Not available"
+    classes = ", ".join(name.title() for name in _supported_classes(model_info))
     model_name = model_info.get("model_name", "Not available")
     st.markdown(
         f"""
@@ -655,7 +650,7 @@ def render_about() -> None:
 def render_scan() -> None:
     render_brand()
     model_info = render_model_notice()
-    class_names = (model_info or {}).get("classes") or ["acne", "eczema", "psoriasis"]
+    class_names = _supported_classes(model_info)
 
     st.markdown(
         f"""
@@ -776,6 +771,13 @@ def render_result() -> None:
     )
     model_info = render_model_notice()
     top = result.get("top_prediction")
+    if top and str(top.get("class_name", "")).lower() not in SUPPORTED_CLASSES:
+        top = None
+    top_k = [
+        item
+        for item in result.get("top_k", [])
+        if str(item.get("class_name", "")).lower() in SUPPORTED_CLASSES
+    ]
     if top:
         name = escape(top["class_name"].title())
         confidence_value = top["confidence"] * 100
@@ -803,12 +805,12 @@ def render_result() -> None:
     )
     if top:
         st.metric("AI Prediction Confidence", f"{confidence_value:.1f}%")
-    render_probability_chart(result.get("top_k", []))
+    render_probability_chart(top_k)
     render_model_metrics(model_info, "Model Performance After Analysis")
 
     rows = "".join(
         f'<div class="prediction-row"><span>{escape(item["class_name"].title())}</span><span>{item["confidence"] * 100:.1f}%</span></div>'
-        for item in result["top_k"]
+        for item in top_k
     )
     st.markdown(
         f'<div class="prediction-panel"><h3>Possible categories</h3>{rows}</div>',
@@ -828,6 +830,12 @@ def render_result() -> None:
         )
 
     explanation = result["explanation"]
+    if top is None:
+        explanation = {
+            "summary": "The result does not match the active three-class model. Please scan again with the current Acne, Eczema, and Psoriasis model.",
+            "next_steps": "Clear the old result and upload a fresh human skin image for analysis.",
+            "warning": URGENT_WARNING,
+        }
     st.markdown(
         f"""
         <div class="consultant">
