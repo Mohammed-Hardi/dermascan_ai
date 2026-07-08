@@ -8,6 +8,7 @@ ASSET_DIR = Path(__file__).resolve().parent / "assets"
 SCAN_BACKGROUND     = ASSET_DIR / "scan-page-bg.png"
 HERO_DOCTOR_BG      = ASSET_DIR / "hero-dermatologist-bg.png"
 DOCTOR_AT_WORK      = ASSET_DIR / "dermatologist-at-work.png"
+GLOBAL_BACKGROUND   = ASSET_DIR / "global-dermatology-bg.png"
 
 
 def _image_layer(path: Path, mime_type: str) -> str:
@@ -79,7 +80,12 @@ APP_CSS = """
 }
 
 .stApp {
-  background: var(--bg-white);
+  background:
+    linear-gradient(115deg, rgba(3, 12, 67, 0.96) 0%, rgba(11, 77, 162, 0.90) 48%, rgba(2, 8, 47, 0.96) 100%),
+    __GLOBAL_BACKGROUND__;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   color: var(--navy-medium);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 16px;
@@ -87,6 +93,8 @@ APP_CSS = """
 }
 
 .block-container {
+  position: relative;
+  z-index: 1;
   max-width: 1100px;
   padding-top: 0;
   padding-bottom: 5rem;
@@ -172,32 +180,7 @@ p, label, .stMarkdown {
    HERO SECTION — Full-bleed Aidoc style (dark blue + doctor bg)
    ============================================================ */
 .landing-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 12% 14%, rgba(32, 135, 255, 0.65), transparent 34%),
-    linear-gradient(120deg, #030c43 0%, #0b4da2 48%, #02082f 100%);
-}
-
-.landing-bg img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 36%;
-  opacity: 0.28;
-  filter: saturate(1.12) contrast(1.1);
-}
-
-.landing-bg::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(90deg, rgba(3, 12, 67, 0.93), rgba(11, 77, 162, 0.82), rgba(2, 8, 47, 0.94)),
-    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.08), transparent 30%);
+  display: none;
 }
 
 .brand-bar,
@@ -251,14 +234,7 @@ p, label, .stMarkdown {
 }
 
 .hero-bg-img {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 38%;
-  filter: saturate(1.05) contrast(1.05);
+  display: none;
 }
 
 .hero-fullbleed h1 {
@@ -555,7 +531,7 @@ p, label, .stMarkdown {
 
 .section-title {
   margin: 2rem 0 1rem;
-  color: var(--navy-deep);
+  color: #fff;
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -681,10 +657,10 @@ p, label, .stMarkdown {
 .welcome-card {
   margin: 1.5rem 0;
   padding: 1.4rem 1.5rem;
-  border: 1px solid var(--border-card);
+  border: 1px solid rgba(210, 228, 242, 0.72);
   border-left: 4px solid var(--orange-primary);
   border-radius: 12px;
-  background: var(--bg-faint-blue);
+  background: rgba(245, 249, 255, 0.94);
   box-shadow: var(--shadow-1);
 }
 
@@ -708,8 +684,8 @@ p, label, .stMarkdown {
   margin: 1.5rem 0 1.5rem;
   padding: 2rem 2rem;
   border-radius: 12px;
-  border: 1px solid var(--border-card);
-  background: linear-gradient(135deg, var(--bg-white) 60%, var(--bg-faint-blue));
+  border: 1px solid rgba(210, 228, 242, 0.72);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 60%, rgba(238, 244, 255, 0.94));
   box-shadow: var(--shadow-1);
   border-left: 4px solid var(--btn-blue);
 }
@@ -756,8 +732,8 @@ p, label, .stMarkdown {
   padding: 1rem 1.2rem;
   color: var(--slate-medium);
   border-radius: 12px;
-  background: var(--bg-faint-blue);
-  border: 1px solid var(--border-card);
+  background: rgba(245, 249, 255, 0.94);
+  border: 1px solid rgba(210, 228, 242, 0.72);
   font-size: 0.9rem;
   line-height: 1.6;
 }
@@ -767,8 +743,8 @@ p, label, .stMarkdown {
    ============================================================ */
 .status-note, .placeholder-note {
   margin: 0 0 1rem;
-  border: 1px solid var(--border-card);
-  background: var(--bg-faint-blue);
+  border: 1px solid rgba(210, 228, 242, 0.72);
+  background: rgba(245, 249, 255, 0.94);
   border-radius: 10px;
   padding: 0.9rem 1rem;
   color: var(--slate-medium);
@@ -794,9 +770,9 @@ p, label, .stMarkdown {
 
 .metric-card {
   padding: 1rem 1rem 1.2rem;
-  border: 1px solid var(--border-card);
+  border: 1px solid rgba(210, 228, 242, 0.72);
   border-radius: 12px;
-  background: var(--bg-white);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(238, 244, 255, 0.94));
   box-shadow: var(--shadow-1);
   transition: box-shadow 180ms ease;
 }
@@ -836,10 +812,8 @@ p, label, .stMarkdown {
   border-radius: 12px;
   padding: 2rem 2rem 1.75rem;
   background:
-    linear-gradient(160deg, rgba(6,12,64,0.75) 0%, rgba(41,82,137,0.70) 100%),
-    __SCAN_BACKGROUND__;
-  background-size: cover;
-  background-position: center;
+    linear-gradient(160deg, rgba(6,12,64,0.88) 0%, rgba(41,82,137,0.78) 100%),
+    radial-gradient(circle at 88% 12%, rgba(255, 255, 255, 0.12), transparent 34%);
   color: #fff;
   margin-bottom: 1.5rem;
   min-height: 13rem;
@@ -873,11 +847,11 @@ p, label, .stMarkdown {
 .result-heading h1 {
   font-size: clamp(1.8rem, 4vw, 2.6rem);
   font-weight: 600;
-  color: var(--navy-deep);
+  color: #fff;
   margin-bottom: 0.4rem;
 }
 
-.result-heading p { color: var(--slate-medium); }
+.result-heading p { color: rgba(255, 255, 255, 0.80); }
 
 .result-feature-card {
   display: grid;
@@ -999,14 +973,14 @@ p, label, .stMarkdown {
 .crop-heading h2 {
   font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 600;
-  color: var(--navy-deep);
+  color: #fff;
 }
 
-.crop-heading p { color: var(--slate-medium); }
+.crop-heading p { color: rgba(255, 255, 255, 0.80); }
 
 .crop-preview-frame {
   margin-bottom: 0.45rem;
-  color: var(--slate-medium);
+  color: rgba(255, 255, 255, 0.80);
   font-size: 0.88rem;
   font-weight: 500;
   text-transform: uppercase;
@@ -1051,8 +1025,8 @@ div.stButton > button,
 div.stDownloadButton > button {
   min-height: 46px;
   border-radius: 999px;
-  border: 1px solid var(--btn-blue);
-  background: var(--btn-blue);
+  border: 1px solid var(--orange-primary);
+  background: var(--orange-primary);
   color: #fff;
   font-family: 'Inter', sans-serif;
   font-weight: 500;
@@ -1065,20 +1039,20 @@ div.stDownloadButton > button {
 div.stButton > button[kind="primary"] {
   min-height: 50px;
   font-size: 1.05rem;
-  box-shadow: 0 8px 24px rgba(41, 82, 137, 0.28);
+  box-shadow: 0 8px 24px rgba(255, 99, 36, 0.32);
 }
 
 div.stButton > button:hover,
 div.stDownloadButton > button:hover {
-  background: var(--btn-blue-hover);
-  border-color: var(--btn-blue-hover);
-  box-shadow: var(--shadow-3);
+  background: var(--orange-secondary);
+  border-color: var(--orange-secondary);
+  box-shadow: 0 10px 26px rgba(255, 99, 36, 0.34);
 }
 
 div.stButton > button:active,
 div.stDownloadButton > button:active {
-  background: var(--btn-blue-active);
-  border-color: var(--btn-blue-active);
+  background: #D94F17;
+  border-color: #D94F17;
   box-shadow: var(--shadow-2);
 }
 
@@ -1288,7 +1262,8 @@ div.stButton > button:disabled {
 
 
 def apply_styles() -> None:
-    css = APP_CSS.replace("__SCAN_BACKGROUND__",  _image_layer(SCAN_BACKGROUND,   "image/png"))
+    css = APP_CSS.replace("__GLOBAL_BACKGROUND__", _image_layer(GLOBAL_BACKGROUND, "image/png"))
+    css = css.replace("__SCAN_BACKGROUND__",       _image_layer(SCAN_BACKGROUND,   "image/png"))
     css = css.replace("__HERO_DOCTOR_BG__",       _image_layer(HERO_DOCTOR_BG,    "image/png"))
     css = css.replace("__DOCTOR_AT_WORK__",       _image_layer(DOCTOR_AT_WORK,    "image/png"))
     st.markdown(css, unsafe_allow_html=True)

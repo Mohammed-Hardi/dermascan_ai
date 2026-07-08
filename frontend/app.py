@@ -381,11 +381,6 @@ def render_home() -> None:
         _asset_data_uri("landing-derm-04.jpg"),
     ]
 
-    st.markdown(
-        f'<div class="landing-bg"><img src="{hero_image}" alt="Dermatology AI background"></div>',
-        unsafe_allow_html=True,
-    )
-
     # ── Split welcome section (Aidoc "See what matters" style) ─
     st.markdown(
         '<div class="welcome-split landing-card-panel"><div class="welcome-split-text"><div class="headline-wrap"><span class="orange-bar"></span><h2>Welcome to DermaScan AI.<br>Clear support for skin screening.</h2></div><p>Start here: upload or capture a skin image, crop the area you want checked, and review an educational AI result designed to support safer dermatology decisions.</p><div class="trusted-note">Educational and decision support tool only, not a medical diagnosis</div></div><div class="welcome-split-image"></div></div><div id="scan-start"></div>',
@@ -396,7 +391,7 @@ def render_home() -> None:
 
     # ── Hero — full-bleed Aidoc style ─────────────────────────
     st.markdown(
-        f'<div class="hero-fullbleed"><img class="hero-bg-img" src="{hero_image}" alt="Doctor using digital healthcare tools"><h1>AI Solutions Deliver<br>Smarter Skin Screening</h1><p>The pressure on medical professionals to provide quality and effective care is enormous. DermaScan AI uses deep learning to help support dermatological triage for {escape(classes_display)} and turns images into actionable educational insights.</p><a class="hero-cta-btn" href="#scan-start">SEE THE SOLUTION</a></div>',
+        f'<div class="hero-fullbleed"><h1>AI Solutions Deliver<br>Smarter Skin Screening</h1><p>The pressure on medical professionals to provide quality and effective care is enormous. DermaScan AI uses deep learning to help support dermatological triage for {escape(classes_display)} and turns images into actionable educational insights.</p><a class="hero-cta-btn" href="#scan-start">SEE THE SOLUTION</a></div>',
         unsafe_allow_html=True,
     )
 
@@ -658,6 +653,7 @@ def render_scan() -> None:
         navigate("home")
 
     model_info = render_model_notice()
+    render_model_metrics(model_info)
     class_names = _supported_classes(model_info)
 
     st.markdown(
@@ -715,7 +711,6 @@ def render_scan() -> None:
                 sex = st.selectbox("Sex", ["", "Female", "Male", "Prefer not to say"])
                 symptom_duration = st.text_input("Symptom duration", placeholder="For example: 2 weeks")
 
-        render_model_metrics(model_info)
         consent = st.checkbox("I understand this tool is not a diagnosis.")
         analyze_disabled = cropped_image is None or not consent
         if st.button("Analyze Image", type="primary", use_container_width=True, disabled=analyze_disabled):
