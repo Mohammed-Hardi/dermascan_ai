@@ -16,7 +16,9 @@ def client() -> TestClient:
 @pytest.fixture
 def valid_image_bytes() -> bytes:
     randomizer = np.random.default_rng(42)
-    pixels = randomizer.integers(35, 220, size=(320, 320, 3), dtype=np.uint8)
+    base = np.array([176, 126, 98], dtype=np.int16)
+    noise = randomizer.integers(-18, 19, size=(320, 320, 3), dtype=np.int16)
+    pixels = np.clip(base + noise, 0, 255).astype(np.uint8)
     output = BytesIO()
     Image.fromarray(pixels).save(output, format="JPEG", quality=92)
     return output.getvalue()

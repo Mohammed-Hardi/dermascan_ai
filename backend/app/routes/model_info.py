@@ -32,16 +32,8 @@ def _read_json_metrics(path: Path, classes: list[str]) -> dict[str, float | None
 
     return {
         "accuracy": saved_metrics.get("accuracy"),
-        "precision": saved_metrics.get("precision"),
-        "recall": saved_metrics.get("recall"),
-        "f1_score": saved_metrics.get("f1_score"),
-        "macro_precision": saved_metrics.get("macro_precision"),
-        "macro_recall": saved_metrics.get("macro_recall"),
-        "macro_f1": saved_metrics.get("macro_f1"),
-        "weighted_precision": saved_metrics.get("weighted_precision"),
-        "weighted_recall": saved_metrics.get("weighted_recall"),
+        "validation_accuracy": saved_metrics.get("validation_accuracy"),
         "weighted_f1": saved_metrics.get("weighted_f1"),
-        "top_3_accuracy": saved_metrics.get("top_3_accuracy"),
     }
 
 
@@ -67,17 +59,15 @@ def _read_training_metrics(path: Path) -> dict[str, float | None] | None:
     return {
         "accuracy": as_float(best_row, "val_accuracy"),
         "validation_accuracy": as_float(best_row, "val_accuracy"),
-        "training_accuracy": as_float(last_row, "train_accuracy"),
-        "best_validation_loss": as_float(best_row, "val_loss"),
-        "epochs_completed": as_float(last_row, "epoch"),
+        "weighted_f1": None,
     }
 
 
 def _load_model_metrics(classes: list[str]) -> dict[str, float | None]:
     empty_metrics: dict[str, float | None] = {
         "accuracy": None,
-        "macro_f1": None,
-        "macro_recall": None,
+        "validation_accuracy": None,
+        "weighted_f1": None,
     }
     reports_dir = PROJECT_ROOT / "ml" / "outputs" / "reports"
     candidate_metric_paths = [

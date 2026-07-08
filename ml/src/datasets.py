@@ -10,7 +10,6 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Callable, Iterable
 
-import cv2
 import numpy as np
 from PIL import Image, UnidentifiedImageError
 import torch
@@ -119,6 +118,8 @@ def compute_dhash(image: Image.Image) -> int:
 
 
 def compute_phash(image: Image.Image) -> int:
+    import cv2
+
     grayscale = image.convert("L").resize((32, 32), Image.Resampling.LANCZOS)
     pixels = np.asarray(grayscale, dtype=np.float32)
     low_frequencies = cv2.dct(pixels)[:8, :8]

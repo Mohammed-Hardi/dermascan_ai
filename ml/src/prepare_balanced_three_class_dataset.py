@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import random
 from collections import defaultdict
@@ -9,14 +10,14 @@ from pathlib import Path
 
 from PIL import Image, ImageEnhance, ImageOps
 
-from ml.src.datasets import PROJECT_ROOT
-from ml.src.prepare_three_class_dataset import prepare_three_class_splits
 
-
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CLASSES = ["acne", "eczema", "psoriasis"]
 SOURCE_SPLIT_DIR = PROJECT_ROOT / "ml" / "data" / "splits_three_class"
+RAW_DIR = PROJECT_ROOT / "ml" / "data" / "raw"
 OUTPUT_DIR = PROJECT_ROOT / "ml" / "data" / "balanced_three_class"
 TRAIN_IMAGE_DIR = OUTPUT_DIR / "train_images"
+IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 
 
 def read_rows(path: Path) -> list[dict[str, str]]:
@@ -30,6 +31,104 @@ def write_rows(path: Path, rows: list[dict[str, str]]) -> None:
         writer = csv.DictWriter(file_handle, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
+
+
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as file_handle:
+        for chunk in iter(lambda: file_handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def scan_raw_images(class_names: list[str], seed: int) -> dict[str, list[dict[str, str]]]:
+    rng = random.Random(seed)
+    label_map = {class_name: str(index) for index, class_name in enumerate(class_names)}
+    grouped: dict[str, list[dict[str, str]]] = {}
+
+    for class_name in class_names:
+        class_dir = RAW_DIR / class_name
+        if not class_dir.is_dir():
+            raise ValueError(f"Missing raw class directory: {class_dir}")
+
+        rows: list[dict[str, str]] = []
+        for image_path in sorted(class_dir.rglob("*")):
+            if not image_path.is_file() or image_path.suffix.lower() not in IMAGE_SUFFIXES:
+                continue
+            try:
+                with Image.open(image_path) as image:
+                    image.load()
+                    width, height = image.size
+            except OSError:
+                continue
+
+            relative_path = image_path.relative_to(PROJECT_ROOT).as_posix()
+            source = "DermNet" if image_path.name.startswith("dermnet_") else "SCIN"
+            rows.append(
+                {
+                    "image_path": relative_path,
+                    "label": label_map[class_name],
+                    "class_name": class_name,
+                    "case_id": image_path.stem,
+                    "source": source,
+                    "width": str(width),
+                    "height": str(height),
+                    "sha256": file_sha256(image_path),
+                    "dhash": "",
+                    "phash": "",
+                    "duplicate_group": image_path.stem,
+                    "split": "",
+                }
+            )
+
+        if not rows:
+            raise ValueError(f"No valid images found for {class_name}")
+        rng.shuffle(rows)
+        grouped[class_name] = rows
+
+    return grouped
+
+
+def split_raw_images(class_names: list[str], seed: int) -> dict[str, dict[str, list[dict[str, str]]]]:
+    grouped = scan_raw_images(class_names, seed)
+    splits = {split: {} for split in ["train", "val", "test"]}
+
+    for class_name, rows in grouped.items():
+        total = len(rows)
+        train_count = max(1, round(total * 0.70))
+        val_count = max(1, round(total * 0.15)) if total >= 3 else max(0, total - train_count)
+        if train_count + val_count >= total:
+            train_count = max(1, total - 2)
+            val_count = 1 if total > 1 else 0
+        class_splits = {
+            "train": rows[:train_count],
+            "val": rows[train_count : train_count + val_count],
+            "test": rows[train_count + val_count :],
+        }
+        for split, split_rows in class_splits.items():
+            for row in split_rows:
+                row["split"] = split
+            splits[split][class_name] = split_rows
+
+    SOURCE_SPLIT_DIR.mkdir(parents=True, exist_ok=True)
+    for split in ["train", "val", "test"]:
+        rows = [row for class_name in class_names for row in splits[split][class_name]]
+        write_rows(SOURCE_SPLIT_DIR / f"{split}.csv", rows)
+
+    summary = {
+        "source": RAW_DIR.as_posix(),
+        "classes": class_names,
+        "splits": {
+            split: {
+                class_name: len(splits[split][class_name])
+                for class_name in class_names
+            }
+            for split in ["train", "val", "test"]
+        },
+        "total_class_counts": {class_name: len(grouped[class_name]) for class_name in class_names},
+    }
+    (SOURCE_SPLIT_DIR / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+    return splits
 
 
 def augment_image(image: Image.Image, rng: random.Random) -> Image.Image:
@@ -52,7 +151,7 @@ def augment_image(image: Image.Image, rng: random.Random) -> Image.Image:
 
 
 def build_balanced_training_set(images_per_class: int = 900, seed: int = 42) -> Path:
-    prepare_three_class_splits(class_names=CLASSES)
+    split_raw_images(CLASSES, seed)
     train_rows = read_rows(SOURCE_SPLIT_DIR / "train.csv")
     grouped: dict[str, list[dict[str, str]]] = defaultdict(list)
     for row in train_rows:
@@ -76,7 +175,7 @@ def build_balanced_training_set(images_per_class: int = 900, seed: int = 42) -> 
                 output = augment_image(image, random.Random(rng.randint(0, 10_000_000)))
             output_name = f"{class_name}_{index:04d}.jpg"
             output_path = class_dir / output_name
-            output.save(output_path, format="JPEG", quality=90, optimize=True)
+            output.save(output_path, format="JPEG", quality=88)
             row = dict(source)
             row["image_path"] = output_path.relative_to(PROJECT_ROOT).as_posix()
             row["label"] = label_map[class_name]
@@ -100,7 +199,7 @@ def build_balanced_training_set(images_per_class: int = 900, seed: int = 42) -> 
         "unique_source_train_counts": {class_name: len(grouped[class_name]) for class_name in CLASSES},
         "validation_total": len(read_rows(OUTPUT_DIR / "val.csv")),
         "test_total": len(read_rows(OUTPUT_DIR / "test.csv")),
-        "note": "Training images are balanced with deterministic augmentation from SCIN train split only.",
+        "note": "Training images are balanced with deterministic augmentation from raw real images.",
     }
     summary_path = OUTPUT_DIR / "summary.json"
     summary_path.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")

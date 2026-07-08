@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import timm
 import torch
 from torch import nn
 
@@ -44,6 +43,8 @@ def create_model(model_name: str, num_classes: int, pretrained: bool = True) -> 
     if model_name not in TIMM_MODEL_NAMES:
         supported = ["custom_cnn", *TIMM_MODEL_NAMES]
         raise ValueError(f"Unsupported model '{model_name}'. Choose from {supported}.")
+    import timm
+
     return timm.create_model(
         TIMM_MODEL_NAMES[model_name],
         pretrained=pretrained,

@@ -12,7 +12,7 @@ from PIL import Image
 API_URL = os.getenv("DERMASCAN_API_URL", "http://127.0.0.1:8000").rstrip("/")
 REQUEST_TIMEOUT = 45
 LOCAL_FALLBACK_ENABLED = os.getenv("DERMASCAN_FRONTEND_FALLBACK", "true").lower() in {"1", "true", "yes"}
-LOCAL_CLASSES = ["acne", "eczema", "scabies"]
+LOCAL_CLASSES = ["acne", "eczema", "psoriasis"]
 LOCAL_SCANS: dict[str, dict[str, Any]] = {}
 
 DISCLAIMER = (
@@ -21,9 +21,9 @@ DISCLAIMER = (
 )
 
 EXPLANATIONS = {
-    "acne": "Acne is a common skin condition that occurs when hair follicles become clogged with oil and dead skin cells.",
-    "eczema": "Eczema, also known as atopic dermatitis, is an inflammatory skin condition that may cause itching, dryness, redness, and irritation.",
-    "scabies": "Scabies is a contagious skin condition caused by tiny mites and often causes intense itching and rash.",
+    "acne": "The image has visual features that may resemble acne, including blocked or inflamed pores and clustered bump-like patterns.",
+    "eczema": "The image has visual features that may resemble eczema, including dry, itchy, cracked, or inflamed-looking patches.",
+    "psoriasis": "The image has visual features that may resemble psoriasis, including raised, scaly, or plaque-like patches.",
 }
 
 URGENT_WARNING = "Seek urgent medical care if the rash is rapidly spreading, painful, bleeding, infected, or associated with fever."
@@ -45,8 +45,8 @@ def _fallback_model_info() -> dict[str, Any]:
         "inference_mode": "streamlit_local_fallback",
         "metrics": {
             "accuracy": None,
-            "macro_f1": None,
-            "macro_recall": None,
+            "validation_accuracy": None,
+            "weighted_f1": None,
         },
         "last_trained": None,
     }

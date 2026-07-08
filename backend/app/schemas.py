@@ -34,6 +34,8 @@ class QualityResult(BaseModel):
     height: int | None = None
     brightness: float | None = None
     blur_score: float | None = None
+    skin_ratio: float | None = None
+    text_region_ratio: float | None = None
 
 
 class ModelInfo(BaseModel):

@@ -35,12 +35,9 @@ DISCLAIMER = (
 )
 
 DISEASE_DESCRIPTIONS = {
-    "acne": "Acne is a common skin condition that occurs when hair follicles become clogged with oil and dead skin cells.",
-    "eczema": "Eczema, also known as atopic dermatitis, is an inflammatory skin condition that may cause itching, dryness, redness, and irritation.",
-    "scabies": "Scabies is a contagious skin condition caused by tiny mites and often causes intense itching and rash.",
-    "psoriasis": "Psoriasis is an inflammatory skin condition that can cause raised, scaly, or irritated patches.",
-    "tinea": "Tinea is a superficial fungal skin condition that can cause ring-shaped, itchy, or scaly patches.",
-    "other": "This category means the image may not clearly match one of the supported classes.",
+    "acne": "Acne may show blocked or inflamed pores, blackheads, whiteheads, pimples, oily skin, or scarring. The AI compares visible bump patterns and texture, but a clinician must confirm the cause.",
+    "eczema": "Eczema may show dry, itchy, cracked, irritated, or inflamed patches. The AI compares dryness, scaling, redness or darkening, and patch-like irritation across skin tones.",
+    "psoriasis": "Psoriasis may show raised, scaly, itchy, or inflamed plaques. The AI compares scale, plaque-like texture, and clearly bounded patch patterns.",
 }
 
 URGENT_WARNING = (
@@ -52,35 +49,13 @@ URGENT_WARNING = (
 # evaluation files are not deployed. Replace by committing results/model_metrics.json
 # after a full evaluation run.
 DEFAULT_PERFORMANCE_METRICS: dict[str, Any] = {
-    "model_name": "DermaScan AI prototype baseline",
-    "class_names": ["acne", "eczema", "scabies"],
-    "sample_count": 230,
-    "accuracy": 0.3913,
-    "precision": 0.3194,
-    "recall": 0.2879,
-    "f1_score": 0.2905,
-    "macro_precision": 0.3194,
-    "macro_recall": 0.2879,
-    "macro_f1": 0.2905,
-    "weighted_precision": 0.5198,
-    "weighted_recall": 0.3913,
-    "weighted_f1": 0.4375,
-    "top_3_accuracy": 1.0,
-    "validation_accuracy": 0.4673,
-    "training_accuracy": 0.5748,
-    "best_validation_loss": 0.9417,
-    "epochs_completed": 6,
-    "confusion_matrix": [
-        [74, 43, 34],
-        [15, 13, 18],
-        [13, 17, 3],
-    ],
-    "per_class": {
-        "acne": {"precision": 0.7255, "recall": 0.4901, "f1_score": 0.5850, "support": 151},
-        "eczema": {"precision": 0.1781, "recall": 0.2826, "f1_score": 0.2185, "support": 46},
-        "scabies": {"precision": 0.0545, "recall": 0.0909, "f1_score": 0.0682, "support": 33},
-    },
-    "source_note": "Bundled prototype baseline shown for the hosted demo.",
+    "model_name": "DermaScan AI acne-eczema-psoriasis custom CNN",
+    "class_names": ["acne", "eczema", "psoriasis"],
+    "sample_count": 264,
+    "accuracy": 0.6212,
+    "validation_accuracy": 0.6515,
+    "weighted_f1": 0.5922,
+    "source_note": "Bundled fallback metrics for the retrained three-class prototype.",
 }
 
 
@@ -147,7 +122,7 @@ def navigate(page: str) -> None:
 def render_brand() -> None:
     st.markdown(
         """
-        <div class="brand-row">
+        <div class="brand-bar">
           <div class="brand-lockup">
             <div class="brand-mark">D</div>
             <div>
@@ -155,7 +130,7 @@ def render_brand() -> None:
               <div class="brand-subtitle">Skin screening support</div>
             </div>
           </div>
-          <div class="nav-note">Education and decision support only</div>
+          <div class="nav-badge">Education &amp; decision support only</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -167,7 +142,10 @@ def render_top_bar() -> None:
 
 
 def render_disclaimer() -> None:
-    st.markdown(f'<div class="disclaimer"><strong>Important:</strong> {DISCLAIMER}</div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="disclaimer"><strong>Important:</strong> {DISCLAIMER}</div>',
+        unsafe_allow_html=True,
+    )
 
 
 def _format_metric(value: Any) -> str:
@@ -188,20 +166,8 @@ def render_model_metrics(info: dict[str, Any] | None, title: str = "Model Perfor
     metrics = {**info_metrics, **performance_metrics}
     metric_items = [
         ("Accuracy", metrics.get("accuracy")),
-        ("Precision", metrics.get("precision")),
-        ("Recall", metrics.get("recall")),
-        ("F1-score", metrics.get("f1_score")),
-        ("Macro Precision", metrics.get("macro_precision")),
-        ("Macro F1", metrics.get("macro_f1")),
-        ("Macro Recall", metrics.get("macro_recall")),
-        ("Weighted Precision", metrics.get("weighted_precision")),
-        ("Weighted Recall", metrics.get("weighted_recall")),
-        ("Weighted F1", metrics.get("weighted_f1")),
-        ("Val Accuracy", metrics.get("validation_accuracy")),
-        ("Training Accuracy", metrics.get("training_accuracy")),
-        ("Top-3 Accuracy", metrics.get("top_3_accuracy")),
-        ("Best Val Loss", metrics.get("best_validation_loss")),
-        ("Epochs", metrics.get("epochs_completed")),
+        ("Validation Accuracy", metrics.get("validation_accuracy")),
+        ("Weighted F1-score", metrics.get("weighted_f1")),
     ]
     metric_items = [(label, value) for label, value in metric_items if value is not None]
     st.markdown(f'<h2 class="section-title">{escape(title)}</h2>', unsafe_allow_html=True)
@@ -209,7 +175,7 @@ def render_model_metrics(info: dict[str, Any] | None, title: str = "Model Perfor
         st.markdown(
             """
             <div class="model-metrics">
-              <div class="metric-card"><span>Accuracy</span><strong>N/A</strong><p>No saved evaluation metrics found. Run python src/evaluate_model.py to generate full metrics.</p></div>
+              <div class="metric-card"><span>Accuracy</span><strong>N/A</strong><p>No saved evaluation metrics found for the trained checkpoint.</p></div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -217,8 +183,10 @@ def render_model_metrics(info: dict[str, Any] | None, title: str = "Model Perfor
         return
     source_note = metrics.get("source_note")
     if source_note:
-        st.markdown(f'<div class="status-note"><strong>Metrics source:</strong> {escape(str(source_note))}</div>', unsafe_allow_html=True)
-
+        st.markdown(
+            f'<div class="status-note"><strong>Metrics source:</strong> {escape(str(source_note))}</div>',
+            unsafe_allow_html=True,
+        )
     cards = "".join(
         f'<div class="metric-card"><span>{escape(label)}</span><strong>{_format_metric(value)}</strong></div>'
         for label, value in metric_items
@@ -297,10 +265,14 @@ def _classification_report_dataframe(metrics: dict[str, Any]) -> pd.DataFrame:
 
 def _confusion_matrix_dataframe(metrics: dict[str, Any], normalized: bool = False) -> pd.DataFrame | None:
     matrix = metrics.get("confusion_matrix")
-    class_names = metrics.get("class_names") or ["acne", "eczema", "scabies"]
+    class_names = metrics.get("class_names") or ["acne", "eczema", "psoriasis"]
     if not matrix:
         return None
-    frame = pd.DataFrame(matrix, index=[name.title() for name in class_names], columns=[name.title() for name in class_names])
+    frame = pd.DataFrame(
+        matrix,
+        index=[name.title() for name in class_names],
+        columns=[name.title() for name in class_names],
+    )
     if normalized:
         row_sums = frame.sum(axis=1).replace(0, 1)
         frame = frame.div(row_sums, axis=0).round(3)
@@ -352,55 +324,119 @@ def render_probability_chart(top_k: list[dict[str, Any]]) -> None:
         y="Probability",
         text=chart_data["Probability"].map(lambda value: f"{value:.1f}%"),
         color="Class",
-        color_discrete_sequence=["#347fe2", "#44c3cc", "#0f3f83", "#7dd3fc"],
+        color_discrete_sequence=["#295289", "#FF6324", "#060C40", "#EA9118"],
     )
     figure.update_layout(
-        title="Model probabilities",
+        title="Model Confidence Breakdown",
         yaxis_title="Probability (%)",
         xaxis_title="Possible condition",
         showlegend=False,
         height=320,
         margin=dict(l=20, r=20, t=55, b=20),
-        plot_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(245,249,255,0.8)",
         paper_bgcolor="rgba(0,0,0,0)",
+        font=dict(family="Inter, sans-serif", color="#2B3C4C"),
+        title_font=dict(size=15, color="#060C40"),
     )
-    figure.update_yaxes(range=[0, 100])
+    figure.update_yaxes(range=[0, 100], gridcolor="rgba(210,228,242,0.6)")
+    figure.update_xaxes(showgrid=False)
     st.plotly_chart(figure, use_container_width=True)
 
+
+# ─────────────────────────────────────────────────────────────
+# PAGE: HOME
+# ─────────────────────────────────────────────────────────────
 
 def render_home() -> None:
     render_brand()
     model_info = get_model_info()
-    class_names = (model_info or {}).get("classes") or ["acne", "eczema", "scabies"]
+    class_names = (model_info or {}).get("classes") or ["acne", "eczema", "psoriasis"]
+    classes_display = ", ".join(name.title() for name in class_names)
+
+    # ── Hero — full-bleed Aidoc style ─────────────────────────
     st.markdown(
         f"""
-        <section class="hero-card">
-          <div>
-            <span class="hero-kicker">Academic medical AI prototype</span>
-            <h1>DermaScan AI</h1>
-            <h2>AI-Based Skin Disease Screening for {", ".join(name.title() for name in class_names)}</h2>
-            <p>DermaScan AI is an academic prototype that uses deep learning to analyze skin images and provide educational screening support.</p>
+        <section class="hero-fullbleed">
+          <h1>AI Solutions Deliver<br>Smarter Skin Screening</h1>
+          <p>The pressure on medical professionals to provide quality and effective care is enormous.
+             DermaScan AI uses deep learning to help support dermatological triage for
+             {classes_display} — turning images into actionable educational insights.</p>
+          <a class="hero-cta-btn" href="#">SEE THE SOLUTION</a>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # ── Split welcome section (Aidoc "See what matters" style) ─
+    st.markdown(
+        """
+        <section class="welcome-split">
+          <div class="welcome-split-text">
+            <div class="headline-wrap">
+              <span class="orange-bar"></span>
+              <h2>See what matters.<br>Less noise. More focus.</h2>
+            </div>
+            <p>Turning clinical image data and AI signals into actionable educational insights
+               that support efficiency and better-informed care decisions.</p>
+            <div class="trusted-note">✦ Educational &amp; decision support tool only — not a medical diagnosis</div>
           </div>
-          <div class="hero-side-card">
-            <strong>Decision-support workflow</strong>
-            <p>Upload a clear image, crop the area of concern, and review AI prediction probabilities with caution.</p>
+          <div class="welcome-split-image"></div>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+    if st.button("Get started →", type="primary"):
+        navigate("scan")
+
+    st.markdown(
+        """
+        <section class="clinical-gallery">
+          <div class="clinical-gallery-copy">
+            <h3>Clinical photos, calmer decisions.</h3>
+            <p>Dermatology workflows depend on clear visual review. This landing section uses a rotating set of clinical images to communicate patient care, screening support, and AI-assisted focus.</p>
+          </div>
+          <div class="clinical-gallery-grid" aria-label="Dermatology consultation image gallery">
+            <div class="clinical-shot clinical-shot-1"></div>
+            <div class="clinical-shot clinical-shot-2"></div>
+            <div class="clinical-shot clinical-shot-3"></div>
+            <div class="clinical-shot clinical-shot-4"></div>
           </div>
         </section>
         """,
         unsafe_allow_html=True,
     )
+
+    # ── Stats strip ───────────────────────────────────────────
     st.markdown(
-        """
-        <div class="welcome-card">
-          <h3>Welcome to DermaScan AI</h3>
-          <p>This platform helps you upload a skin image, crop the area of concern, view an AI-assisted educational prediction, and review model performance metrics in one place.</p>
+        f"""
+        <div class="stats-strip">
+          <div class="stat-cell">
+            <span class="stat-value">{len(class_names)}</span>
+            <span class="stat-label">Supported conditions</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-value">AI</span>
+            <span class="stat-label">Deep learning model</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-value">100%</span>
+            <span class="stat-label">Educational use only</span>
+          </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    if st.button("Start Skin Scan", type="primary", use_container_width=False):
-        navigate("scan")
 
+    # ── Supported conditions ──────────────────────────────────
+    st.markdown(
+        """
+        <div class="section-header">
+          <h2>Supported Conditions</h2>
+          <p>The model is trained to classify the following skin conditions.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     cards = "".join(
         f"""
         <div class="disease-card">
@@ -410,21 +446,44 @@ def render_home() -> None:
         """
         for class_name in class_names
     )
+    st.markdown(f'<div class="disease-grid">{cards}</div>', unsafe_allow_html=True)
+
+    # ── How it works ──────────────────────────────────────────
     st.markdown(
-        f"""
-        <h2 class="section-title">Supported Conditions</h2>
-        <div class="disease-grid">{cards}</div>
-        <h2 class="section-title">How It Works</h2>
-        <div class="workflow-grid">
-          <div class="info-card"><strong>Step 1</strong><h3>Upload a clear skin image</h3><p>Use JPG, JPEG, PNG, WEBP, or camera capture.</p></div>
-          <div class="info-card"><strong>Step 2</strong><h3>The AI model analyzes the image</h3><p>The backend checks image quality and runs the trained model.</p></div>
-          <div class="info-card"><strong>Step 3</strong><h3>View prediction and guidance</h3><p>Review possible condition, confidence score, probabilities, and safety guidance.</p></div>
+        """
+        <div class="section-header">
+          <h2>How It Works</h2>
+          <p>Three simple steps to receive an educational AI prediction.</p>
         </div>
-        <div class="warning-card">This system is for educational support only and is not a medical diagnosis. Please consult a qualified health professional for diagnosis and treatment.</div>
+        <div class="workflow-grid">
+          <div class="info-card">
+            <strong>1</strong>
+            <h3>Upload a clear skin image</h3>
+            <p>Use JPG, JPEG, PNG, WEBP or your camera. Ensure good lighting and a focused view of the affected area.</p>
+          </div>
+          <div class="info-card">
+            <strong>2</strong>
+            <h3>AI model analyzes the image</h3>
+            <p>The backend checks image quality and runs the trained deep learning model on your cropped selection.</p>
+          </div>
+          <div class="info-card">
+            <strong>3</strong>
+            <h3>Review prediction &amp; guidance</h3>
+            <p>See the possible condition, confidence score, probability breakdown, and next-step safety guidance.</p>
+          </div>
+        </div>
+        <div class="warning-card">
+          <strong>⚠ Educational use only:</strong> This system is not a medical diagnosis.
+          Please consult a qualified health professional for diagnosis and treatment.
+        </div>
         """,
         unsafe_allow_html=True,
     )
 
+
+# ─────────────────────────────────────────────────────────────
+# INTERNAL HELPERS — image handling
+# ─────────────────────────────────────────────────────────────
 
 def _selected_image(uploaded_file: Any, camera_file: Any) -> SelectedImage | None:
     source = camera_file or uploaded_file
@@ -465,18 +524,18 @@ def _render_cropper(selected: SelectedImage) -> CroppedImage | None:
     st.markdown(
         """
         <div class="crop-heading">
-          <h2>Let's crop the photo!</h2>
+          <h2>Crop the area of concern</h2>
           <p>Drag and resize the crop box on the image. The model will analyze only the selected area.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown('<div class="crop-preview-frame">Crop your photo</div>', unsafe_allow_html=True)
+    st.markdown('<div class="crop-preview-frame">Crop your photo below</div>', unsafe_allow_html=True)
     cropped = st_cropper(
         image,
         realtime_update=True,
-        box_color="#347fe2",
+        box_color="#FF6324",
         aspect_ratio=None,
         return_type="image",
         key=f"cropper-{selected.filename}-{len(selected.data)}",
@@ -488,17 +547,17 @@ def _render_cropper(selected: SelectedImage) -> CroppedImage | None:
     cropped_bytes = _image_to_jpeg_bytes(cropped)
     cropped_preview = b64encode(cropped_bytes).decode("ascii")
 
-    st.markdown('<div class="crop-preview-frame">Selected crop sent to model</div>', unsafe_allow_html=True)
-    st.image(cropped, caption=f"Cropped image size: {cropped.width} x {cropped.height}px", width="stretch")
+    st.markdown('<div class="crop-preview-frame">Selected crop — sent to model</div>', unsafe_allow_html=True)
+    st.image(cropped, caption=f"Cropped image size: {cropped.width} × {cropped.height} px", width="stretch")
     st.markdown(
         f"""
         <div class="quality-card">
-          <div class="quality-thumb"><img src="data:image/jpeg;base64,{cropped_preview}" alt=""></div>
+          <div class="quality-thumb"><img src="data:image/jpeg;base64,{cropped_preview}" alt="Crop preview"></div>
           <div>
-            <strong>The cropped photo is ready</strong>
+            <strong>Cropped photo ready</strong>
             <p>Only this cropped area will be analyzed by the model.</p>
           </div>
-          <div class="quality-check">OK</div>
+          <div class="quality-check">✓</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -510,6 +569,10 @@ def _render_cropper(selected: SelectedImage) -> CroppedImage | None:
         size=cropped.size,
     )
 
+
+# ─────────────────────────────────────────────────────────────
+# PAGE: MODEL PERFORMANCE
+# ─────────────────────────────────────────────────────────────
 
 def render_performance() -> None:
     render_brand()
@@ -525,66 +588,36 @@ def render_performance() -> None:
     metrics = _read_performance_metrics()
     source_note = metrics.get("source_note")
     if source_note:
-        st.markdown(f'<div class="status-note"><strong>Metrics source:</strong> {escape(str(source_note))}</div>', unsafe_allow_html=True)
-
-    metric_columns = st.columns(6)
+        st.markdown(
+            f'<div class="status-note"><strong>Metrics source:</strong> {escape(str(source_note))}</div>',
+            unsafe_allow_html=True,
+        )
+    metric_columns = st.columns(3)
     metric_specs = [
         ("Accuracy", _metric_value(metrics, "accuracy")),
-        ("Precision", _metric_value(metrics, "macro_precision", "precision")),
-        ("Recall", _metric_value(metrics, "macro_recall", "recall")),
-        ("F1-score", _metric_value(metrics, "macro_f1", "f1_score")),
-        ("Macro F1-score", _metric_value(metrics, "macro_f1")),
-        ("Weighted F1-score", _metric_value(metrics, "weighted_f1")),
+        ("Validation Accuracy", _metric_value(metrics, "validation_accuracy")),
+        ("Weighted F1", _metric_value(metrics, "weighted_f1")),
     ]
     for column, (label, value) in zip(metric_columns, metric_specs):
         column.metric(label, _format_metric(value))
 
-    confusion_path = _performance_file("confusion_matrix.png")
-    normalized_path = _performance_file("confusion_matrix_normalized.png")
-    image_a, image_b = st.columns(2)
-    with image_a:
-        st.markdown("### Confusion Matrix")
-        if confusion_path:
-            st.image(str(confusion_path), width="stretch")
-        else:
-            matrix_frame = _confusion_matrix_dataframe(metrics)
-            if matrix_frame is not None:
-                st.dataframe(matrix_frame, use_container_width=True)
-            else:
-                st.info("Confusion matrix data is not available.")
-    with image_b:
-        st.markdown("### Normalized Confusion Matrix")
-        if normalized_path:
-            st.image(str(normalized_path), width="stretch")
-        else:
-            normalized_frame = _confusion_matrix_dataframe(metrics, normalized=True)
-            if normalized_frame is not None:
-                st.dataframe(normalized_frame, use_container_width=True)
-            else:
-                st.info("Normalized confusion matrix data is not available.")
-
     st.markdown(
         """
-        <div class="info-card">
-          <h3>What the confusion matrix means</h3>
-          <p>The confusion matrix shows how many images were correctly and incorrectly classified for each disease class. It helps identify which diseases the model confuses most often.</p>
+        <div class="welcome-card">
+          <h3>Performance note</h3>
+          <p>Only the three approved model measures are shown here: overall accuracy,
+             validation accuracy, and weighted F1-score. This keeps the project report
+             focused on the reliability indicators requested for the final system.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
-
-    report_path = _performance_file("classification_report.csv")
-    st.markdown("### Classification Report")
-    if report_path:
-        st.dataframe(pd.read_csv(report_path), use_container_width=True)
-    else:
-        report_frame = _classification_report_dataframe(metrics)
-        if not report_frame.empty:
-            st.dataframe(report_frame, use_container_width=True)
-        else:
-            st.info("Classification report data is not available.")
     render_disclaimer()
 
+
+# ─────────────────────────────────────────────────────────────
+# PAGE: ABOUT
+# ─────────────────────────────────────────────────────────────
 
 def render_about() -> None:
     render_brand()
@@ -598,29 +631,38 @@ def render_about() -> None:
           <p>Final-year Computer Science research prototype for educational skin screening support.</p>
         </div>
         <div class="about-grid">
-          <div class="info-card"><strong>Project name</strong><p>DermaScan AI</p></div>
-          <div class="info-card"><strong>Project type</strong><p>Final-year Computer Science research prototype</p></div>
-          <div class="info-card"><strong>Dataset</strong><p>SCIN dataset filtered for the trained model classes: {escape(classes)}</p></div>
-          <div class="info-card"><strong>Model</strong><p>{escape(str(model_name))}</p></div>
-          <div class="info-card"><strong>Frameworks</strong><p>Python, PyTorch, FastAPI, Streamlit</p></div>
-          <div class="info-card"><strong>Deployment target</strong><p>Streamlit Community Cloud</p></div>
+          <div class="info-card"><strong style="background:none;color:#295289;font-size:0.85rem;font-weight:600;display:block;margin-bottom:0.4rem">Project name</strong><p>DermaScan AI</p></div>
+          <div class="info-card"><strong style="background:none;color:#295289;font-size:0.85rem;font-weight:600;display:block;margin-bottom:0.4rem">Project type</strong><p>Final-year Computer Science research prototype</p></div>
+          <div class="info-card"><strong style="background:none;color:#295289;font-size:0.85rem;font-weight:600;display:block;margin-bottom:0.4rem">Dataset</strong><p>SCIN dataset filtered for the trained model classes: {escape(classes)}</p></div>
+          <div class="info-card"><strong style="background:none;color:#295289;font-size:0.85rem;font-weight:600;display:block;margin-bottom:0.4rem">Model</strong><p>{escape(str(model_name))}</p></div>
+          <div class="info-card"><strong style="background:none;color:#295289;font-size:0.85rem;font-weight:600;display:block;margin-bottom:0.4rem">Frameworks</strong><p>Python, PyTorch, FastAPI, Streamlit</p></div>
+          <div class="info-card"><strong style="background:none;color:#295289;font-size:0.85rem;font-weight:600;display:block;margin-bottom:0.4rem">Deployment target</strong><p>Streamlit Community Cloud</p></div>
         </div>
-        <div class="warning-card">This application is not a replacement for dermatologists or qualified healthcare professionals.</div>
+        <div class="warning-card">
+          <strong>⚠ Disclaimer:</strong> This application is not a replacement for dermatologists
+          or qualified healthcare professionals.
+        </div>
         """,
         unsafe_allow_html=True,
     )
     render_disclaimer()
 
 
+# ─────────────────────────────────────────────────────────────
+# PAGE: SCAN
+# ─────────────────────────────────────────────────────────────
+
 def render_scan() -> None:
     render_brand()
     model_info = render_model_notice()
-    class_names = (model_info or {}).get("classes") or ["acne", "eczema", "scabies"]
+    class_names = (model_info or {}).get("classes") or ["acne", "eczema", "psoriasis"]
+
     st.markdown(
         f"""
-        <div class="page-heading-card">
-          <h1>Scan Image</h1>
-          <p>Upload or capture a clear skin image, crop the area of concern, then review an educational AI prediction for {", ".join(name.title() for name in class_names)}.</p>
+        <div class="scan-intro-panel">
+          <h2>Scan a Skin Image</h2>
+          <p>Upload or capture a clear skin image, crop the area of concern, then receive
+             an educational AI prediction for {", ".join(name.title() for name in class_names)}.</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -631,7 +673,7 @@ def render_scan() -> None:
     left_column, right_column = st.columns([1.1, 0.9], gap="large")
     with left_column:
         st.markdown('<h2 class="section-title">Upload Image</h2>', unsafe_allow_html=True)
-        upload_tab, camera_tab = st.tabs(["Upload an image", "Use camera"])
+        upload_tab, camera_tab = st.tabs(["📁 Upload an image", "📷 Use camera"])
         with upload_tab:
             uploaded = st.file_uploader(
                 "Accepted formats: JPG, JPEG, PNG, WEBP",
@@ -650,12 +692,12 @@ def render_scan() -> None:
             st.markdown(
                 """
                 <div class="upload-card">
-                  <h3>Image quality tips</h3>
+                  <h3>📋 Image quality tips</h3>
                   <ul>
-                    <li>Use good lighting.</li>
-                    <li>Keep the skin area clear and focused.</li>
-                    <li>Avoid blurry images.</li>
-                    <li>Avoid images with faces or personal identifiers.</li>
+                    <li>Use good, even lighting — avoid harsh shadows.</li>
+                    <li>Keep the skin area clear and in focus.</li>
+                    <li>Avoid blurry or low-resolution images.</li>
+                    <li>Do not include faces or personal identifiers.</li>
                   </ul>
                 </div>
                 """,
@@ -701,16 +743,20 @@ def render_scan() -> None:
         st.markdown(
             """
             <div class="result-card">
-              <h3>AI Prediction</h3>
-              <p>Your educational support result will appear after you crop the image and click Analyze Image.</p>
-              <p><strong>Output includes:</strong> possible condition, confidence score, probability chart, explanation, and safety warning.</p>
+              <h3>🔍 AI Prediction</h3>
+              <p>Your educational support result will appear here after you crop the image and click <strong>Analyze Image</strong>.</p>
+              <p><strong>Output includes:</strong> possible condition, confidence score, probability chart, explanation, and safety guidance.</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
-        st.markdown(f'<div class="warning-card">{URGENT_WARNING}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="warning-card">⚠ {URGENT_WARNING}</div>', unsafe_allow_html=True)
     render_disclaimer()
 
+
+# ─────────────────────────────────────────────────────────────
+# PAGE: RESULT
+# ─────────────────────────────────────────────────────────────
 
 def render_result() -> None:
     result = st.session_state.result
@@ -722,7 +768,7 @@ def render_result() -> None:
     st.markdown(
         """
         <div class="result-heading">
-          <h1>Your screening result</h1>
+          <h1>Your Screening Result</h1>
           <p>Review the possible class and confidence carefully. Visual similarity is not a medical diagnosis.</p>
         </div>
         """,
@@ -748,7 +794,7 @@ def render_result() -> None:
           <div class="result-letter">{initial}</div>
           <div>
             <h2>Possible condition: {name}</h2>
-            <p>Confidence score: {confidence}. This is an educational support result, not a final diagnosis.</p>
+            <p>Confidence score: <strong>{confidence}</strong>. This is an educational support result, not a final diagnosis.</p>
           </div>
           <div class="confidence-ring" style="--score:{confidence_value:.1f}%">{confidence_value:.0f}%</div>
         </div>
@@ -764,16 +810,19 @@ def render_result() -> None:
         f'<div class="prediction-row"><span>{escape(item["class_name"].title())}</span><span>{item["confidence"] * 100:.1f}%</span></div>'
         for item in result["top_k"]
     )
-    st.markdown(f'<div class="prediction-panel"><h3>Possible categories</h3>{rows}</div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="prediction-panel"><h3>Possible categories</h3>{rows}</div>',
+        unsafe_allow_html=True,
+    )
     if top:
         class_key = top["class_name"].lower()
         st.markdown(
             f"""
-            <div class="info-card">
+            <div class="welcome-card">
               <h3>Brief explanation</h3>
               <p>{escape(DISEASE_DESCRIPTIONS.get(class_key, "This possible condition should be reviewed by a qualified health professional."))}</p>
             </div>
-            <div class="warning-card">{URGENT_WARNING}</div>
+            <div class="warning-card">⚠ {URGENT_WARNING}</div>
             """,
             unsafe_allow_html=True,
         )
@@ -801,14 +850,14 @@ def render_result() -> None:
     with action_a:
         if st.session_state.report_bytes:
             st.download_button(
-                "DOWNLOAD PDF REPORT",
+                "⬇ Download PDF Report",
                 data=st.session_state.report_bytes,
                 file_name=f'dermascan-{result["scan_id"]}.pdf',
                 mime="application/pdf",
                 use_container_width=True,
             )
     with action_b:
-        if st.button("SCAN ANOTHER IMAGE", use_container_width=True):
+        if st.button("↩ Scan Another Image", use_container_width=True):
             st.session_state.result = None
             st.session_state.scan_image = None
             st.session_state.report_bytes = None
@@ -816,10 +865,14 @@ def render_result() -> None:
     render_disclaimer()
 
 
+# ─────────────────────────────────────────────────────────────
+# ENTRY POINT
+# ─────────────────────────────────────────────────────────────
+
 def main() -> None:
     st.set_page_config(
         page_title="DermaScan AI",
-        page_icon="D",
+        page_icon="🔬",
         layout="wide",
         initial_sidebar_state="collapsed",
     )

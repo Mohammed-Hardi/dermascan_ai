@@ -17,7 +17,21 @@ from torch import nn
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
+try:
+    from torch.utils.tensorboard import SummaryWriter
+except ModuleNotFoundError:
+    class SummaryWriter:  # type: ignore[no-redef]
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            pass
+
+        def add_scalars(self, *args: object, **kwargs: object) -> None:
+            pass
+
+        def add_scalar(self, *args: object, **kwargs: object) -> None:
+            pass
+
+        def close(self) -> None:
+            pass
 
 from ml.src.augmentations import build_eval_transform, build_train_transform
 from ml.src.datasets import PROJECT_ROOT, SkinConditionDataset
