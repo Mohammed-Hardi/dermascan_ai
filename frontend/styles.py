@@ -510,11 +510,18 @@ p, label, .stMarkdown {
 
 .section-title {
   margin: 2rem 0 1rem;
-  color: #ffffff;
+  color: #ffffff !important;
   text-shadow: 0 2px 12px rgba(2, 8, 47, 0.55);
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: -0.02em;
+}
+
+.section-title a,
+.section-title svg,
+.section-title .anchor-link {
+  color: #ffffff !important;
+  fill: #ffffff !important;
 }
 
 /* ============================================================
@@ -1053,6 +1060,15 @@ div.stButton > button:disabled {
   margin: 0 0 1rem;
 }
 
+[data-testid="stFileUploader"] label,
+[data-testid="stFileUploader"] p,
+[data-testid="stFileUploader"] small,
+[data-testid="stCameraInput"] label,
+[data-testid="stCameraInput"] p {
+  color: #ffffff !important;
+  text-shadow: 0 2px 10px rgba(2, 8, 47, 0.55);
+}
+
 [data-testid="stFileUploader"] section {
   border-radius: 12px;
   border: 1.5px dashed var(--border-input);
@@ -1081,14 +1097,19 @@ div.stButton > button:disabled {
 
 [data-baseweb="tab"] {
   border-radius: 999px;
-  color: var(--slate-medium);
+  color: rgba(255, 255, 255, 0.86) !important;
   font-family: 'Inter', sans-serif;
   font-size: 0.9rem;
 }
 
 [data-baseweb="tab"][aria-selected="true"] {
-  color: var(--btn-blue);
-  background: var(--bg-pale-blue);
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+[data-baseweb="tab"] p,
+[data-baseweb="tab"] span {
+  color: inherit !important;
 }
 
 [data-testid="stExpander"] {
