@@ -517,11 +517,22 @@ p, label, .stMarkdown {
   letter-spacing: -0.02em;
 }
 
+.force-white-text,
+[data-testid="stMarkdownContainer"] h2.section-title,
+[data-testid="stMarkdownContainer"] .section-title,
+[data-testid="stMarkdownContainer"] h2.section-title * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
 .section-title a,
 .section-title svg,
-.section-title .anchor-link {
+.section-title .anchor-link,
+[data-testid="stMarkdownContainer"] h2.section-title a,
+[data-testid="stMarkdownContainer"] h2.section-title svg {
   color: #ffffff !important;
   fill: #ffffff !important;
+  stroke: #ffffff !important;
 }
 
 /* ============================================================
@@ -1063,10 +1074,22 @@ div.stButton > button:disabled {
 [data-testid="stFileUploader"] label,
 [data-testid="stFileUploader"] p,
 [data-testid="stFileUploader"] small,
+[data-testid="stFileUploader"] span,
+[data-testid="stFileUploader"] div,
 [data-testid="stCameraInput"] label,
-[data-testid="stCameraInput"] p {
+[data-testid="stCameraInput"] p,
+[data-testid="stCameraInput"] span {
   color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
   text-shadow: 0 2px 10px rgba(2, 8, 47, 0.55);
+}
+
+[data-testid="stFileUploader"] section,
+[data-testid="stFileUploader"] section *,
+[data-testid="stCameraInput"] section,
+[data-testid="stCameraInput"] section * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 
 [data-testid="stFileUploader"] section {
@@ -1108,8 +1131,12 @@ div.stButton > button:disabled {
 }
 
 [data-baseweb="tab"] p,
-[data-baseweb="tab"] span {
+[data-baseweb="tab"] span,
+[data-baseweb="tab"] div,
+[data-baseweb="tab"] svg {
   color: inherit !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
 }
 
 [data-testid="stExpander"] {

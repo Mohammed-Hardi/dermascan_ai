@@ -189,7 +189,10 @@ def render_model_metrics(info: dict[str, Any] | None, title: str = "Model Perfor
         ("Weighted F1-score", metrics.get("weighted_f1")),
     ]
     metric_items = [(label, value) for label, value in metric_items if value is not None]
-    st.markdown(f'<h2 class="section-title">{escape(title)}</h2>', unsafe_allow_html=True)
+    st.markdown(
+        f'<h2 class="section-title force-white-text" style="color:#ffffff !important;">{escape(title)}</h2>',
+        unsafe_allow_html=True,
+    )
     if not metric_items:
         st.markdown(
             """
@@ -671,7 +674,10 @@ def render_scan() -> None:
 
     left_column, right_column = st.columns([1.1, 0.9], gap="large")
     with left_column:
-        st.markdown('<h2 class="section-title">Upload Image</h2>', unsafe_allow_html=True)
+        st.markdown(
+            '<h2 class="section-title force-white-text" style="color:#ffffff !important;">Upload Image</h2>',
+            unsafe_allow_html=True,
+        )
         upload_tab, camera_tab = st.tabs(["📁 Upload an image", "📷 Use camera"])
         with upload_tab:
             uploaded = st.file_uploader(
