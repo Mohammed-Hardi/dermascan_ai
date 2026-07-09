@@ -258,31 +258,6 @@ p, label, .stMarkdown {
   margin: 0 auto 2rem;
 }
 
-.hero-cta-btn {
-  position: relative;
-  z-index: 2;
-  display: inline-block;
-  padding: 14px 36px;
-  background: var(--orange-primary);
-  color: #fff;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.88rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
-  transition: background 150ms ease, box-shadow 150ms ease;
-  box-shadow: 0 6px 20px rgba(255,99,36,0.40);
-}
-
-.hero-cta-btn:hover {
-  background: var(--orange-secondary);
-  box-shadow: 0 8px 28px rgba(255,99,36,0.55);
-}
-
 /* ============================================================
    WELCOME SPLIT SECTION (Aidoc "See what matters" style)
    ============================================================ */
@@ -404,22 +379,22 @@ p, label, .stMarkdown {
 }
 
 .clinical-gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(140px, 1fr));
-  gap: 0.85rem;
+  display: block;
   min-height: 16rem;
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid rgba(210, 228, 242, 0.9);
+  box-shadow: 0 18px 44px rgba(2, 8, 47, 0.24);
 }
 
 .clinical-shot {
-  min-height: 16rem;
-  border-radius: 14px;
-  border: 1px solid rgba(210, 228, 242, 0.9);
-  background-size: cover;
-  background-position: center;
-  box-shadow: 0 14px 34px rgba(6, 12, 64, 0.16);
-  position: relative;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
-  animation: clinical-float 8s ease-in-out infinite;
+  opacity: 0;
+  transform: translateX(1.8rem) scale(1.02);
+  animation: clinical-slide 12s ease-in-out infinite;
 }
 
 .clinical-shot::after {
@@ -431,12 +406,15 @@ p, label, .stMarkdown {
 
 .clinical-shot:nth-child(2),
 .clinical-shot:nth-child(4) {
-  transform: translateY(1.4rem);
-  animation-delay: -2s;
+  animation-delay: 3s;
 }
 
 .clinical-shot:nth-child(3) {
-  animation-delay: -4s;
+  animation-delay: 6s;
+}
+
+.clinical-shot:nth-child(4) {
+  animation-delay: 9s;
 }
 
 .clinical-shot img {
@@ -446,9 +424,10 @@ p, label, .stMarkdown {
   display: block;
 }
 
-@keyframes clinical-float {
-  0%, 100% { translate: 0 0; filter: saturate(0.96); }
-  50% { translate: 0 -0.75rem; filter: saturate(1.08); }
+@keyframes clinical-slide {
+  0% { opacity: 0; transform: translateX(1.8rem) scale(1.02); }
+  8%, 24% { opacity: 1; transform: translateX(0) scale(1); }
+  32%, 100% { opacity: 0; transform: translateX(-1.8rem) scale(1.02); }
 }
 
 @keyframes pulse-dot {
@@ -531,7 +510,8 @@ p, label, .stMarkdown {
 
 .section-title {
   margin: 2rem 0 1rem;
-  color: #fff;
+  color: #ffffff;
+  text-shadow: 0 2px 12px rgba(2, 8, 47, 0.55);
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -1077,12 +1057,21 @@ div.stButton > button:disabled {
   border-radius: 12px;
   border: 1.5px dashed var(--border-input);
   background: var(--bg-faint-blue);
-  transition: border-color 150ms ease, background 150ms ease;
 }
 
 [data-testid="stFileUploader"] section:hover {
-  border-color: var(--btn-blue);
-  background: var(--bg-pale-blue);
+  border-color: var(--border-input);
+  background: var(--bg-faint-blue);
+}
+
+[data-testid="stFileUploader"] button,
+[data-testid="stFileUploader"] button:hover,
+[data-testid="stFileUploader"] button:focus,
+[data-testid="stFileUploader"] button:active {
+  background: #ffffff !important;
+  border-color: var(--border-input) !important;
+  color: var(--navy-deep) !important;
+  box-shadow: none !important;
 }
 
 [data-baseweb="tab-list"] {
@@ -1110,6 +1099,13 @@ div.stButton > button:disabled {
 
 [data-testid="stCheckbox"] {
   margin: 0.5rem 0;
+}
+
+[data-testid="stCheckbox"] label,
+[data-testid="stCheckbox"] p,
+[data-testid="stCheckbox"] span {
+  color: #ffffff !important;
+  text-shadow: 0 2px 10px rgba(2, 8, 47, 0.55);
 }
 
 /* Streamlit native metric widget */

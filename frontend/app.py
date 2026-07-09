@@ -391,7 +391,7 @@ def render_home() -> None:
 
     # ── Hero — full-bleed Aidoc style ─────────────────────────
     st.markdown(
-        f'<div class="hero-fullbleed"><h1>AI Solutions Deliver<br>Smarter Skin Screening</h1><p>The pressure on medical professionals to provide quality and effective care is enormous. DermaScan AI uses deep learning to help support dermatological triage for {escape(classes_display)} and turns images into actionable educational insights.</p><a class="hero-cta-btn" href="#scan-start">SEE THE SOLUTION</a></div>',
+        f'<div class="hero-fullbleed"><h1>AI Solutions Deliver<br>Smarter Skin Screening</h1><p>The pressure on medical professionals to provide quality and effective care is enormous. DermaScan AI uses deep learning to help support dermatological triage for {escape(classes_display)} and turns images into actionable educational insights.</p></div>',
         unsafe_allow_html=True,
     )
 
@@ -702,24 +702,10 @@ def render_scan() -> None:
                 unsafe_allow_html=True,
             )
 
-        with st.expander("Optional context"):
-            col_a, col_b = st.columns(2)
-            with col_a:
-                age_range = st.selectbox("Age range", ["", "Under 18", "18-29", "30-44", "45-59", "60+"])
-                body_location = st.text_input("Body location", placeholder="For example: forearm")
-            with col_b:
-                sex = st.selectbox("Sex", ["", "Female", "Male", "Prefer not to say"])
-                symptom_duration = st.text_input("Symptom duration", placeholder="For example: 2 weeks")
-
         consent = st.checkbox("I understand this tool is not a diagnosis.")
         analyze_disabled = cropped_image is None or not consent
         if st.button("Analyze Image", type="primary", use_container_width=True, disabled=analyze_disabled):
-            metadata = {
-                "age_range": age_range,
-                "sex": sex,
-                "body_location": body_location,
-                "symptom_duration": symptom_duration,
-            }
+            metadata: dict[str, str] = {}
             try:
                 with st.status("Checking image quality and preparing the screening result...", expanded=True) as status:
                     result = predict_image(
