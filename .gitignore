@@ -32,4 +32,5 @@ ml/outputs/*
 !ml/outputs/models/
 ml/outputs/models/*
 !ml/outputs/models/dermascan-acne-eczema-psoriasis-custom-cnn.pt
+!ml/outputs/models/dermascan-acne-eczema-psoriasis-efficientnet-b0.pt
 .runtime/

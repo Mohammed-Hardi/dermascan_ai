@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     max_text_region_ratio: float = 0.025
     inference_mode: str = "placeholder"
     allow_smoke_model: bool = False
-    model_path: Path = PROJECT_ROOT / "ml" / "outputs" / "models" / "dermascan-efficientnet-b0.pt"
+    model_path: Path = PROJECT_ROOT / "ml" / "outputs" / "models" / "dermascan-acne-eczema-psoriasis-efficientnet-b0.pt"
     model_name: str = "dermascan-placeholder"
     model_version: str = "dummy-v0.1.0"
     allowed_origins: list[str] = [

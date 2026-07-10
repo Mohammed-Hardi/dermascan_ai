@@ -1,26 +1,26 @@
 project_name: dermascan-ai
-model_name: efficientnet_b0
-checkpoint_name: dermascan-three-class-efficientnet-b0.pt
+model_name: torchvision_efficientnet_b0
+checkpoint_name: dermascan-acne-eczema-psoriasis-efficientnet-b0.pt
 num_classes: 3
-class_names: [eczema, tinea, psoriasis]
+class_names: [acne, eczema, psoriasis]
 input_size: 224
 batch_size: 16
 epochs: 30
-learning_rate: 0.0001
+learning_rate: 0.0003
 weight_decay: 0.0001
-early_stopping_patience: 5
+early_stopping_patience: 7
 use_class_weights: true
 pretrained: true
 num_workers: 0
 seed: 42
 data:
-  train_csv: ml/data/splits_three_class/train.csv
-  val_csv: ml/data/splits_three_class/val.csv
-  test_csv: ml/data/splits_three_class/test.csv
+  train_csv: ml/data/balanced_three_class/train.csv
+  val_csv: ml/data/balanced_three_class/val.csv
+  test_csv: ml/data/balanced_three_class/test.csv
 outputs:
   model_dir: ml/outputs/models
-  report_dir: ml/outputs/reports/three_class_efficientnet
-  plot_dir: ml/outputs/plots/three_class_efficientnet
+  report_dir: ml/outputs/reports/acne_eczema_psoriasis_efficientnet
+  plot_dir: ml/outputs/plots/acne_eczema_psoriasis_efficientnet
 augmentations:
   crop_scale: [0.75, 1.0]
   horizontal_flip_probability: 0.5

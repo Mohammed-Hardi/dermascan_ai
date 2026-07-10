@@ -68,13 +68,13 @@ URGENT_WARNING = (
 # evaluation files are not deployed. Replace by committing results/model_metrics.json
 # after a full evaluation run.
 DEFAULT_PERFORMANCE_METRICS: dict[str, Any] = {
-    "model_name": "DermaScan AI acne-eczema-psoriasis custom CNN",
+    "model_name": "DermaScan AI acne-eczema-psoriasis EfficientNet-B0",
     "class_names": ["acne", "eczema", "psoriasis"],
-    "sample_count": 264,
-    "accuracy": 0.6212,
-    "validation_accuracy": 0.6515,
-    "weighted_f1": 0.5922,
-    "source_note": "Bundled fallback metrics for the retrained three-class prototype.",
+    "sample_count": 454,
+    "accuracy": 0.8789,
+    "validation_accuracy": 0.8150,
+    "weighted_f1": 0.8780,
+    "source_note": "Bundled fallback metrics for the retrained EfficientNet-B0 three-class prototype.",
 }
 
 

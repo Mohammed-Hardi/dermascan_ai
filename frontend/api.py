@@ -16,7 +16,7 @@ LOCAL_FALLBACK_ENABLED = os.getenv("DERMASCAN_FRONTEND_FALLBACK", "true").lower(
 LOCAL_CLASSES = ["acne", "eczema", "psoriasis"]
 LOCAL_SCANS: dict[str, dict[str, Any]] = {}
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-LOCAL_CHECKPOINT_PATH = PROJECT_ROOT / "ml" / "outputs" / "models" / "dermascan-acne-eczema-psoriasis-custom-cnn.pt"
+LOCAL_CHECKPOINT_PATH = PROJECT_ROOT / "ml" / "outputs" / "models" / "dermascan-acne-eczema-psoriasis-efficientnet-b0.pt"
 LOCAL_METRICS_PATH = PROJECT_ROOT / "results" / "model_metrics.json"
 
 DISCLAIMER = (
