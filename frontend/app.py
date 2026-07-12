@@ -2,7 +2,6 @@ from base64 import b64encode
 from dataclasses import dataclass
 from html import escape
 from io import BytesIO
-import json
 from pathlib import Path
 import sys
 from typing import Any
@@ -15,10 +14,6 @@ import pandas as pd
 from PIL import Image, UnidentifiedImageError
 import streamlit as st
 try:
-    from streamlit_cropper import st_cropper
-except ModuleNotFoundError:
-    st_cropper = None
-try:
     import plotly.express as px
 except ModuleNotFoundError:
     px = None
@@ -27,7 +22,6 @@ from frontend.api import ApiError, download_report, get_model_info, health_check
 from frontend.styles import apply_styles
 
 
-RESULTS_DIR = PROJECT_ROOT / "results"
 ASSET_DIR = PROJECT_ROOT / "frontend" / "assets"
 SUPPORTED_CLASSES = ["acne", "eczema", "psoriasis"]
 
@@ -64,33 +58,11 @@ URGENT_WARNING = (
     "infected, or associated with fever."
 )
 
-# Bundled baseline keeps Streamlit Cloud informative even when generated
-# evaluation files are not deployed. Replace by committing results/model_metrics.json
-# after a full evaluation run.
-DEFAULT_PERFORMANCE_METRICS: dict[str, Any] = {
-    "model_name": "DermaScan AI acne-eczema-psoriasis EfficientNet-B0",
-    "class_names": ["acne", "eczema", "psoriasis"],
-    "sample_count": 454,
-    "accuracy": 0.8789,
-    "validation_accuracy": 0.8150,
-    "weighted_f1": 0.8780,
-    "source_note": "Bundled fallback metrics for the retrained EfficientNet-B0 three-class prototype.",
-}
-
-
 @dataclass(slots=True)
 class SelectedImage:
     data: bytes
     filename: str
     content_type: str
-
-
-@dataclass(slots=True)
-class CroppedImage:
-    data: bytes
-    filename: str
-    content_type: str
-    size: tuple[int, int]
 
 
 def initialize_state() -> None:
@@ -109,7 +81,6 @@ def _page_label(page: str) -> str:
     labels = {
         "home": "Home",
         "scan": "Scan Image",
-        "performance": "Model Performance",
         "about": "About",
     }
     return labels.get(page, "Home")
@@ -118,7 +89,7 @@ def _page_label(page: str) -> str:
 def render_sidebar_navigation() -> None:
     if st.session_state.page == "result":
         return
-    pages = ["Home", "Scan Image", "Model Performance", "About"]
+    pages = ["Home", "Scan Image", "About"]
     selected = st.sidebar.radio(
         "Navigation",
         pages,
@@ -127,7 +98,6 @@ def render_sidebar_navigation() -> None:
     page_map = {
         "Home": "home",
         "Scan Image": "scan",
-        "Model Performance": "performance",
         "About": "about",
     }
     st.session_state.page = page_map[selected]
@@ -156,64 +126,11 @@ def render_brand() -> None:
     )
 
 
-def render_top_bar() -> None:
-    st.markdown('<div class="top-strip"></div>', unsafe_allow_html=True)
-
-
 def render_disclaimer() -> None:
     st.markdown(
         f'<div class="disclaimer"><strong>Important:</strong> {DISCLAIMER}</div>',
         unsafe_allow_html=True,
     )
-
-
-def _format_metric(value: Any) -> str:
-    if value is None:
-        return "N/A"
-    try:
-        number = float(value)
-    except (TypeError, ValueError):
-        return "N/A"
-    if 0 <= number <= 1:
-        return f"{number * 100:.1f}%"
-    return f"{number:.3g}"
-
-
-def render_model_metrics(info: dict[str, Any] | None, title: str = "Model Performance Metrics") -> None:
-    performance_metrics = _read_performance_metrics() or {}
-    info_metrics = (info or {}).get("metrics") or {}
-    metrics = {**info_metrics, **performance_metrics}
-    metric_items = [
-        ("Accuracy", metrics.get("accuracy")),
-        ("Validation Accuracy", metrics.get("validation_accuracy")),
-        ("Weighted F1-score", metrics.get("weighted_f1")),
-    ]
-    metric_items = [(label, value) for label, value in metric_items if value is not None]
-    st.markdown(
-        f'<h2 class="section-title force-white-text" style="color:#ffffff !important;">{escape(title)}</h2>',
-        unsafe_allow_html=True,
-    )
-    if not metric_items:
-        st.markdown(
-            """
-            <div class="model-metrics">
-              <div class="metric-card"><span>Accuracy</span><strong>N/A</strong><p>No saved evaluation metrics found for the trained checkpoint.</p></div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        return
-    source_note = metrics.get("source_note")
-    if source_note:
-        st.markdown(
-            f'<div class="status-note"><strong>Metrics source:</strong> {escape(str(source_note))}</div>',
-            unsafe_allow_html=True,
-        )
-    cards = "".join(
-        f'<div class="metric-card"><span>{escape(label)}</span><strong>{_format_metric(value)}</strong></div>'
-        for label, value in metric_items
-    )
-    st.markdown(f'<div class="model-metrics">{cards}</div>', unsafe_allow_html=True)
 
 
 def render_model_notice() -> dict[str, Any] | None:
@@ -244,89 +161,6 @@ def render_model_notice() -> dict[str, Any] | None:
             unsafe_allow_html=True,
         )
     return info
-
-
-def _load_json(path: Path) -> dict[str, Any] | None:
-    if not path.exists():
-        return None
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return None
-
-
-def _read_performance_metrics() -> dict[str, Any] | None:
-    candidate_paths = [
-        RESULTS_DIR / "model_metrics.json",
-        PROJECT_ROOT / "ml" / "outputs" / "reports" / "acne_eczema_psoriasis" / "evaluation_metrics.json",
-    ]
-    for path in candidate_paths:
-        metrics = _load_json(path)
-        if metrics:
-            return metrics
-    return DEFAULT_PERFORMANCE_METRICS
-
-
-def _classification_report_dataframe(metrics: dict[str, Any]) -> pd.DataFrame:
-    per_class = metrics.get("per_class") or {}
-    rows: list[dict[str, Any]] = []
-    for class_name, values in per_class.items():
-        if not isinstance(values, dict):
-            continue
-        rows.append(
-            {
-                "class_name": class_name,
-                "precision": values.get("precision"),
-                "recall": values.get("recall", values.get("recall_sensitivity")),
-                "f1_score": values.get("f1_score"),
-                "support": values.get("support"),
-            }
-        )
-    return pd.DataFrame(rows)
-
-
-def _confusion_matrix_dataframe(metrics: dict[str, Any], normalized: bool = False) -> pd.DataFrame | None:
-    matrix = metrics.get("confusion_matrix")
-    class_names = metrics.get("class_names") or SUPPORTED_CLASSES
-    if set(str(name).lower() for name in class_names) != set(SUPPORTED_CLASSES):
-        class_names = SUPPORTED_CLASSES
-    if not matrix:
-        return None
-    frame = pd.DataFrame(
-        matrix,
-        index=[name.title() for name in class_names],
-        columns=[name.title() for name in class_names],
-    )
-    if normalized:
-        row_sums = frame.sum(axis=1).replace(0, 1)
-        frame = frame.div(row_sums, axis=0).round(3)
-    return frame
-
-
-def _performance_file(name: str) -> Path | None:
-    candidate_paths = [
-        RESULTS_DIR / name,
-        PROJECT_ROOT / "ml" / "outputs" / "reports" / "acne_eczema_psoriasis" / name,
-        PROJECT_ROOT / "ml" / "outputs" / "plots" / "acne_eczema_psoriasis" / name,
-    ]
-    for path in candidate_paths:
-        if path.exists():
-            return path
-    return None
-
-
-def _metric_value(metrics: dict[str, Any] | None, *keys: str) -> float | None:
-    if not metrics:
-        return None
-    for key in keys:
-        value = metrics.get(key)
-        if value is None:
-            continue
-        try:
-            return float(value)
-        except (TypeError, ValueError):
-            continue
-    return None
 
 
 def render_probability_chart(top_k: list[dict[str, Any]]) -> None:
@@ -386,7 +220,7 @@ def render_home() -> None:
 
     # ── Split welcome section (Aidoc "See what matters" style) ─
     st.markdown(
-        '<div class="welcome-split landing-card-panel"><div class="welcome-split-text"><div class="headline-wrap"><span class="orange-bar"></span><h2>Welcome to DermaScan AI.<br>Clear support for skin screening.</h2></div><p>Start here: upload or capture a skin image, crop the area you want checked, and review an educational AI result designed to support safer dermatology decisions.</p><div class="trusted-note">Educational and decision support tool only, not a medical diagnosis</div></div><div class="welcome-split-image"></div></div><div id="scan-start"></div>',
+        '<div class="welcome-split landing-card-panel"><div class="welcome-split-text"><div class="headline-wrap"><span class="orange-bar"></span><h2>Welcome to DermaScan AI.<br>Clear support for skin screening.</h2></div><p>Start here: upload or capture a skin image. The backend prepares it automatically before the AI model reviews it for educational support.</p><div class="trusted-note">Educational and decision support tool only, not a medical diagnosis</div></div><div class="welcome-split-image"></div></div><div id="scan-start"></div>',
         unsafe_allow_html=True,
     )
     if st.button("Get started →", type="primary"):
@@ -462,7 +296,7 @@ def render_home() -> None:
           <div class="info-card">
             <strong>2</strong>
             <h3>AI model analyzes the image</h3>
-            <p>The backend checks image quality and runs the trained deep learning model on your cropped selection.</p>
+            <p>The backend checks image quality, prepares the image automatically, and runs the trained deep learning model.</p>
           </div>
           <div class="info-card">
             <strong>3</strong>
@@ -499,119 +333,29 @@ def _load_image(image_bytes: bytes) -> Image.Image | None:
         return None
 
 
-def _image_to_jpeg_bytes(image: Image.Image) -> bytes:
-    buffer = BytesIO()
-    image.save(buffer, format="JPEG", quality=95, optimize=True)
-    return buffer.getvalue()
-
-
-def _render_cropper(selected: SelectedImage) -> CroppedImage | None:
+def _render_selected_image(selected: SelectedImage) -> SelectedImage | None:
     image = _load_image(selected.data)
     if image is None:
         st.error("This image could not be opened. Please upload a clear JPG, PNG, or WEBP file.")
         return None
-    if st_cropper is None:
-        st.error(
-            "The interactive crop tool is not available in the Python environment running Streamlit. "
-            "Install dependencies with `pip install -r requirements.txt`, then stop and restart the app. "
-            "If `.venv` fails, reinstall Python 3.11 and recreate the virtual environment."
-        )
-        return None
-
-    render_top_bar()
     st.markdown(
         """
-        <div class="crop-heading">
-          <h2>Crop the area of concern</h2>
-          <p>Drag and resize the crop box on the image. The model will analyze only the selected area.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown('<div class="crop-preview-frame">Crop your photo below</div>', unsafe_allow_html=True)
-    cropped = st_cropper(
-        image,
-        realtime_update=True,
-        box_color="#FF6324",
-        aspect_ratio=None,
-        return_type="image",
-        key=f"cropper-{selected.filename}-{len(selected.data)}",
-    )
-    if cropped is None:
-        return None
-
-    cropped = cropped.convert("RGB")
-    cropped_bytes = _image_to_jpeg_bytes(cropped)
-    cropped_preview = b64encode(cropped_bytes).decode("ascii")
-
-    st.markdown('<div class="crop-preview-frame">Selected crop — sent to model</div>', unsafe_allow_html=True)
-    st.image(cropped, caption=f"Cropped image size: {cropped.width} × {cropped.height} px", width="stretch")
-    st.markdown(
-        f"""
         <div class="quality-card">
-          <div class="quality-thumb"><img src="data:image/jpeg;base64,{cropped_preview}" alt="Crop preview"></div>
           <div>
-            <strong>Cropped photo ready</strong>
-            <p>Only this cropped area will be analyzed by the model.</p>
+            <strong>Image ready</strong>
+            <p>The backend will automatically prepare and center-crop this image before analysis.</p>
           </div>
-          <div class="quality-check">✓</div>
+          <div class="quality-check">Ready</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    return CroppedImage(
-        data=cropped_bytes,
-        filename=f"cropped-{selected.filename.rsplit('.', 1)[0]}.jpg",
-        content_type="image/jpeg",
-        size=cropped.size,
-    )
+    st.image(image, caption="Submitted image preview", width="stretch")
+    return selected
 
 
 # ─────────────────────────────────────────────────────────────
-# PAGE: MODEL PERFORMANCE
 # ─────────────────────────────────────────────────────────────
-
-def render_performance() -> None:
-    render_brand()
-    st.markdown(
-        """
-        <div class="page-heading-card">
-          <h1>Model Performance</h1>
-          <p>Evaluation dashboard for the trained DermaScan AI model.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    metrics = _read_performance_metrics()
-    source_note = metrics.get("source_note")
-    if source_note:
-        st.markdown(
-            f'<div class="status-note"><strong>Metrics source:</strong> {escape(str(source_note))}</div>',
-            unsafe_allow_html=True,
-        )
-    metric_columns = st.columns(3)
-    metric_specs = [
-        ("Accuracy", _metric_value(metrics, "accuracy")),
-        ("Validation Accuracy", _metric_value(metrics, "validation_accuracy")),
-        ("Weighted F1", _metric_value(metrics, "weighted_f1")),
-    ]
-    for column, (label, value) in zip(metric_columns, metric_specs):
-        column.metric(label, _format_metric(value))
-
-    st.markdown(
-        """
-        <div class="welcome-card">
-          <h3>Performance note</h3>
-          <p>Only the three approved model measures are shown here: overall accuracy,
-             validation accuracy, and weighted F1-score. This keeps the project report
-             focused on the reliability indicators requested for the final system.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    render_disclaimer()
-
 
 # ─────────────────────────────────────────────────────────────
 # PAGE: ABOUT
@@ -656,14 +400,13 @@ def render_scan() -> None:
         navigate("home")
 
     model_info = render_model_notice()
-    render_model_metrics(model_info)
     class_names = _supported_classes(model_info)
 
     st.markdown(
         f"""
         <div class="scan-intro-panel">
           <h2>Scan a Skin Image</h2>
-          <p>Upload or capture a clear skin image, crop the area of concern, then receive
+          <p>Upload or capture a clear skin image, then receive
              an educational AI prediction for {", ".join(name.title() for name in class_names)}.</p>
         </div>
         """,
@@ -689,9 +432,9 @@ def render_scan() -> None:
             captured = st.camera_input("Take a photo")
 
         selected = _selected_image(uploaded, captured)
-        cropped_image = None
+        analysis_image = None
         if selected:
-            cropped_image = _render_cropper(selected)
+            analysis_image = _render_selected_image(selected)
         else:
             st.markdown(
                 """
@@ -709,20 +452,20 @@ def render_scan() -> None:
             )
 
         consent = st.checkbox("I understand this tool is not a diagnosis.")
-        analyze_disabled = cropped_image is None or not consent
+        analyze_disabled = analysis_image is None or not consent
         if st.button("Analyze Image", type="primary", use_container_width=True, disabled=analyze_disabled):
             metadata: dict[str, str] = {}
             try:
                 with st.status("Checking image quality and preparing the screening result...", expanded=True) as status:
                     result = predict_image(
-                        cropped_image.data,
-                        cropped_image.filename,
-                        cropped_image.content_type,
+                        analysis_image.data,
+                        analysis_image.filename,
+                        analysis_image.content_type,
                         metadata,
                     )
                     status.update(label="Screening result ready", state="complete", expanded=False)
                 st.session_state.result = result
-                st.session_state.scan_image = cropped_image.data
+                st.session_state.scan_image = analysis_image.data
                 st.session_state.report_bytes = None
                 st.session_state.page = "result"
                 st.rerun()
@@ -734,7 +477,7 @@ def render_scan() -> None:
             """
             <div class="result-card">
               <h3>🔍 AI Prediction</h3>
-              <p>Your educational support result will appear here after you crop the image and click <strong>Analyze Image</strong>.</p>
+              <p>Your educational support result will appear here after you upload or capture an image and click <strong>Analyze Image</strong>.</p>
               <p><strong>Output includes:</strong> possible condition, confidence score, probability chart, explanation, and safety guidance.</p>
             </div>
             """,
@@ -801,7 +544,6 @@ def render_result() -> None:
     if top:
         st.metric("AI Prediction Confidence", f"{confidence_value:.1f}%")
     render_probability_chart(top_k)
-    render_model_metrics(model_info, "Model Performance After Analysis")
 
     rows = "".join(
         f'<div class="prediction-row"><span>{escape(item["class_name"].title())}</span><span>{item["confidence"] * 100:.1f}%</span></div>'
@@ -884,8 +626,6 @@ def main() -> None:
     render_sidebar_navigation()
     if st.session_state.page == "scan":
         render_scan()
-    elif st.session_state.page == "performance":
-        render_performance()
     elif st.session_state.page == "about":
         render_about()
     elif st.session_state.page == "result":

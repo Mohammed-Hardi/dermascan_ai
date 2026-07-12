@@ -757,51 +757,6 @@ p, label, .stMarkdown {
 .placeholder-note strong { color: var(--error-red); }
 
 /* ============================================================
-   METRIC CARDS (performance page)
-   ============================================================ */
-.model-metrics {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin: 1rem 0 1.5rem;
-}
-
-.metric-card {
-  padding: 1rem 1rem 1.2rem;
-  border: 1px solid rgba(210, 228, 242, 0.72);
-  border-radius: 12px;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(238, 244, 255, 0.94));
-  box-shadow: var(--shadow-1);
-  transition: box-shadow 180ms ease;
-}
-
-.metric-card:hover { box-shadow: var(--shadow-2); }
-
-.metric-card span {
-  display: block;
-  color: var(--slate-medium);
-  font-size: 0.76rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.3rem;
-}
-
-.metric-card strong {
-  display: block;
-  color: var(--btn-blue);
-  font-size: 1.35rem;
-  font-weight: 600;
-}
-
-.metric-card p {
-  margin: 0.3rem 0 0;
-  color: var(--slate-medium);
-  font-size: 0.84rem;
-  line-height: 1.4;
-}
-
-/* ============================================================
    SCAN PAGE UPLOAD CARD
    ============================================================ */
 .scan-intro-panel {
@@ -961,33 +916,9 @@ p, label, .stMarkdown {
   font-size: 0.95rem;
 }
 
-/* ============================================================
-   CROP / UPLOAD TOOL
-   ============================================================ */
-.crop-heading {
-  margin: 0 0 1rem;
-}
-
-.crop-heading h2 {
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  font-weight: 600;
-  color: #fff;
-}
-
-.crop-heading p { color: rgba(255, 255, 255, 0.80); }
-
-.crop-preview-frame {
-  margin-bottom: 0.45rem;
-  color: rgba(255, 255, 255, 0.80);
-  font-size: 0.88rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
 .quality-card {
   display: grid;
-  grid-template-columns: 3.2rem 1fr auto;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: 1rem;
   margin: 1rem 0 1.3rem;
@@ -996,20 +927,6 @@ p, label, .stMarkdown {
   border-radius: 10px;
   background: var(--bg-white);
   box-shadow: var(--shadow-1);
-}
-
-.quality-thumb {
-  width: 3.2rem;
-  height: 3.2rem;
-  overflow: hidden;
-  border-radius: 6px;
-  border: 1px solid var(--border-card);
-}
-
-.quality-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .quality-card strong { color: #059669; font-weight: 600; }
@@ -1185,16 +1102,6 @@ div.stButton > button:disabled {
 }
 
 /* ============================================================
-   TOP STRIP (cropper separator)
-   ============================================================ */
-.top-strip {
-  height: 3px;
-  margin: 1.5rem -1.5rem 1.5rem;
-  background: linear-gradient(90deg, var(--btn-blue), var(--orange-primary));
-  border-radius: 0;
-}
-
-/* ============================================================
    RESPONSIVE BREAKPOINTS
    ============================================================ */
 @media (max-width: 900px) {
@@ -1229,10 +1136,6 @@ div.stButton > button:disabled {
 
   .about-grid {
     grid-template-columns: 1fr;
-  }
-
-  .model-metrics {
-    grid-template-columns: repeat(2, 1fr);
   }
 
   .stats-strip {
@@ -1275,10 +1178,6 @@ div.stButton > button:disabled {
 
   .clinical-shot {
     min-height: 12rem;
-  }
-
-  .model-metrics {
-    grid-template-columns: 1fr 1fr;
   }
 
   .result-feature-card {

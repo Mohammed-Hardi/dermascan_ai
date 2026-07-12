@@ -2,7 +2,6 @@
 
 # Streamlit frontend and API client
 streamlit>=1.40,<2
-streamlit-cropper>=0.2.2,<1
 requests>=2.32,<3
 
 # FastAPI backend

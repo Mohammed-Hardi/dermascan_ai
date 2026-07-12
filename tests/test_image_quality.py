@@ -23,6 +23,16 @@ def test_strips_to_rgb_jpeg(valid_image_bytes) -> None:
     assert result.image_bytes.startswith(b"\xff\xd8")
 
 
+def test_backend_auto_center_crops_valid_image() -> None:
+    output = BytesIO()
+    Image.new("RGB", (420, 320), color=(180, 120, 95)).save(output, format="JPEG", quality=92)
+
+    result = validate_image(output.getvalue(), get_settings())
+
+    assert result.quality.is_acceptable is True
+    assert result.image.size == (320, 320)
+
+
 def test_rejects_image_with_text() -> None:
     image = Image.new("RGB", (420, 320), color=(205, 205, 205))
     draw = ImageDraw.Draw(image)

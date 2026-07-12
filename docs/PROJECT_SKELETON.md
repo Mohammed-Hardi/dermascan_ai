@@ -4,7 +4,7 @@ This document explains the basic structure of the DermaScan AI project and how t
 
 ## 1. Project Overview
 
-DermaScan AI is an educational skin screening system. A user uploads or captures a skin image, crops the affected area, and the system returns a possible class prediction for three supported conditions:
+DermaScan AI is an educational skin screening system. A user uploads or captures a skin image, the backend prepares it automatically, and the system returns a possible class prediction for three supported conditions:
 
 - Acne
 - Eczema
@@ -39,9 +39,8 @@ The frontend is implemented in `frontend/app.py`. It is the main Streamlit appli
 The frontend contains these main pages:
 
 - Landing page: introduces DermaScan AI and the supported conditions.
-- Scan page: allows the user to upload or capture an image, crop it, view model performance, and start analysis.
+- Scan page: allows the user to upload or capture an image and start analysis.
 - Result page: shows the predicted condition, confidence score, probability breakdown, AI explanation, and safety disclaimer.
-- Model performance page: displays accuracy, validation accuracy, and weighted F1-score.
 - About page: explains the project purpose and technology stack.
 
 The design and colors are controlled in `frontend/styles.py`. This file defines the blue medical theme, background images, cards, buttons, and responsive layout.
@@ -60,13 +59,14 @@ Important backend route files include:
 
 The prediction route works in this order:
 
-1. The frontend sends the cropped image to `/api/v1/predict`.
+1. The frontend sends the uploaded or captured image to `/api/v1/predict`.
 2. The backend reads the uploaded file.
 3. `image_quality.py` checks that the image is valid and acceptable.
-4. `inference.py` sends the image to the trained model.
-5. `explanation.py` creates simple AI consultant text for the predicted class.
-6. The result is saved temporarily in `storage/scans.py`.
-7. The backend sends the final response back to the frontend.
+4. The backend center-crops the accepted image automatically.
+5. `inference.py` sends the prepared image to the trained model.
+6. `explanation.py` creates simple AI consultant text for the predicted class.
+7. The result is saved temporarily in `storage/scans.py`.
+8. The backend sends the final response back to the frontend.
 
 ## 5. Model Implementation
 
@@ -84,10 +84,10 @@ Key files include:
 The trained checkpoint used by the app is:
 
 ```text
-ml/outputs/models/dermascan-acne-eczema-psoriasis-custom-cnn.pt
+ml/outputs/models/dermascan-acne-eczema-psoriasis-efficientnet-b0.pt
 ```
 
-The model takes a cropped skin image, resizes it to the configured input size, converts it into a tensor, and predicts probabilities for acne, eczema, and psoriasis.
+The backend center-crops the skin image, and the model pipeline resizes it to the configured input size, converts it into a tensor, and predicts probabilities for acne, eczema, and psoriasis.
 
 ## 6. Model Prediction Flow
 
@@ -98,11 +98,11 @@ User image
   ↓
 Streamlit upload/camera input
   ↓
-User crops the image
-  ↓
-Frontend sends cropped image to backend
+Frontend sends the original image to backend
   ↓
 Backend validates image quality
+  ↓
+Backend automatically prepares and center-crops the image
   ↓
 PyTorch model predicts class probabilities
   ↓
@@ -113,7 +113,7 @@ Frontend displays result to user
 
 ## 7. Model Performance
 
-The website displays only the main three performance metrics:
+The saved evaluation report contains the main three performance metrics, but they are not displayed on the public website:
 
 - Accuracy
 - Validation accuracy
@@ -125,7 +125,7 @@ These values are read from:
 results/model_metrics.json
 ```
 
-The frontend also contains fallback metrics so the deployed app can still show performance information if the metrics file is missing.
+These values remain available for the project report and offline model evaluation.
 
 ## 8. Safety and Disclaimer
 
@@ -143,4 +143,3 @@ In simple terms:
 - The trained model checkpoint connects the ML work to the running app.
 
 This separation makes the project easier to explain, test, and defend because each part has a clear responsibility.
-

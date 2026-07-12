@@ -19,6 +19,15 @@ class ValidatedImage:
     quality: QualityResult
 
 
+def auto_prepare_image(image: Image.Image) -> Image.Image:
+    """Center-crop uploaded photos to the main square region before inference."""
+    width, height = image.size
+    crop_size = min(width, height)
+    left = (width - crop_size) // 2
+    top = (height - crop_size) // 2
+    return image.crop((left, top, left + crop_size, top + crop_size)).copy()
+
+
 def _skin_pixel_ratio(rgb: np.ndarray) -> float:
     hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
     ycrcb = cv2.cvtColor(rgb, cv2.COLOR_RGB2YCrCb)
@@ -135,6 +144,7 @@ def validate_image(data: bytes, settings: Settings) -> ValidatedImage:
         text_region_ratio=round(text_region_ratio, 4),
     )
 
+    prepared_image = auto_prepare_image(clean_image)
     output = BytesIO()
-    clean_image.save(output, format="JPEG", quality=90, optimize=True)
-    return ValidatedImage(clean_image, output.getvalue(), quality)
+    prepared_image.save(output, format="JPEG", quality=90, optimize=True)
+    return ValidatedImage(prepared_image, output.getvalue(), quality)
