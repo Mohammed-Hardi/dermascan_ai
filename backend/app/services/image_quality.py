@@ -10,6 +10,7 @@ from backend.app.schemas import QualityResult
 
 
 ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
+MIN_TEXT_LIKE_REGIONS = 4
 
 
 @dataclass(slots=True)
@@ -88,6 +89,11 @@ def _text_region_ratio(gray: np.ndarray) -> tuple[float, int]:
     return float(text_area / image_area), text_like_count
 
 
+def _has_text_like_content(region_ratio: float, region_count: int, max_region_ratio: float) -> bool:
+    """Reject only when several detected regions form a strong text-like pattern."""
+    return region_ratio > max_region_ratio and region_count >= MIN_TEXT_LIKE_REGIONS
+
+
 def validate_image(data: bytes, settings: Settings) -> ValidatedImage:
     max_bytes = settings.max_upload_mb * 1024 * 1024
     if not data:
@@ -128,8 +134,12 @@ def validate_image(data: bytes, settings: Settings) -> ValidatedImage:
         reason = "The image is too bright. Avoid flash glare and direct light."
     elif blur_score < settings.blur_threshold:
         reason = "The image appears blurry. Hold the camera steady and retake it."
-    elif text_region_ratio > settings.max_text_region_ratio and text_region_count >= 3:
-        reason = "Images containing text, labels, screenshots, or document-like content are not allowed. Upload a clear photo of human skin only."
+    elif _has_text_like_content(
+        text_region_ratio,
+        text_region_count,
+        settings.max_text_region_ratio,
+    ):
+        reason = "The image contains text-like content. Upload a clear photo of human skin without visible words or text overlays."
     elif skin_ratio < settings.min_skin_ratio:
         reason = "The image does not appear to contain enough human skin. Upload or crop a clear photo of the affected human skin area only."
 

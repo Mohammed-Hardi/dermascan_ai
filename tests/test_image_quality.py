@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 from backend.app.config import get_settings
-from backend.app.services.image_quality import validate_image
+from backend.app.services.image_quality import _has_text_like_content, validate_image
 
 
 def test_rejects_small_image() -> None:
@@ -46,6 +46,13 @@ def test_rejects_image_with_text() -> None:
     assert result.quality.is_acceptable is False
     assert result.quality.reason is not None
     assert "text" in result.quality.reason.lower()
+
+
+def test_text_filter_requires_repeated_text_like_regions() -> None:
+    settings = get_settings()
+
+    assert _has_text_like_content(0.08, 3, settings.max_text_region_ratio) is False
+    assert _has_text_like_content(0.08, 4, settings.max_text_region_ratio) is True
 
 
 def test_rejects_non_skin_image() -> None:
