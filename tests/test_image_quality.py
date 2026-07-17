@@ -73,6 +73,27 @@ def test_accepts_skin_image_with_incidental_text() -> None:
     assert result.quality.is_acceptable is True
 
 
+def test_focus_crop_removes_text_heavy_border() -> None:
+    randomizer = np.random.default_rng(91)
+    base = np.array([176, 126, 98], dtype=np.int16)
+    noise = randomizer.integers(-18, 19, size=(420, 520, 3), dtype=np.int16)
+    pixels = np.clip(base + noise, 0, 255).astype(np.uint8)
+    image = Image.fromarray(pixels)
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((450, 0, 519, 419), fill=(245, 245, 245))
+    for top in range(20, 400, 35):
+        draw.text((460, top), "TEXT", fill=(5, 5, 5))
+    output = BytesIO()
+    image.save(output, format="JPEG", quality=92)
+
+    result = validate_image(output.getvalue(), get_settings())
+    prepared_skin_ratio = _skin_pixel_ratio(np.asarray(result.image))
+
+    assert result.quality.is_acceptable is True
+    assert result.image.size == (420, 420)
+    assert prepared_skin_ratio > result.quality.skin_ratio + 0.04
+
+
 def test_text_filter_requires_repeated_text_and_missing_skin() -> None:
     settings = get_settings()
 

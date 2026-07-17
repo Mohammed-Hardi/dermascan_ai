@@ -11,6 +11,10 @@ from backend.app.schemas import QualityResult
 
 ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
 MIN_TEXT_LIKE_REGIONS = 4
+FOCUS_CROP_SCALES = (0.9, 0.8, 0.7)
+MIN_FOCUS_SKIN_GAIN = 0.06
+MIN_FOCUS_TEXT_REGION_RATIO = 0.12
+MAX_FOCUS_BORDER_SKIN_RATIO = 0.20
 
 
 @dataclass(slots=True)
@@ -20,16 +24,89 @@ class ValidatedImage:
     quality: QualityResult
 
 
-def auto_prepare_image(image: Image.Image) -> Image.Image:
-    """Center-crop uploaded photos to the main square region before inference."""
+def _crop_coordinates(width: int, height: int, size: int) -> list[tuple[int, int]]:
+    max_left = width - size
+    max_top = height - size
+    left_values = np.linspace(0, max_left, num=5).round().astype(int)
+    top_values = np.linspace(0, max_top, num=5).round().astype(int)
+    return [(int(left), int(top)) for left in left_values for top in top_values]
+
+
+def auto_prepare_image(
+    image: Image.Image,
+    skin_mask: np.ndarray | None = None,
+    text_region_ratio: float = 0.0,
+    text_region_count: int = 0,
+) -> Image.Image:
+    """Crop toward a large skin-rich region while preserving useful context."""
     width, height = image.size
     crop_size = min(width, height)
-    left = (width - crop_size) // 2
-    top = (height - crop_size) // 2
-    return image.crop((left, top, left + crop_size, top + crop_size)).copy()
+    center_left = (width - crop_size) // 2
+    center_top = (height - crop_size) // 2
+    best_crop = (center_left, center_top, crop_size)
+
+    if skin_mask is None:
+        skin_mask = _skin_pixel_mask(np.asarray(image.convert("RGB")))
+    border_width = max(8, round(crop_size * 0.08))
+    minimum_border_skin_ratio = min(
+        float(skin_mask[:, :border_width].mean()),
+        float(skin_mask[:, -border_width:].mean()),
+        float(skin_mask[:border_width, :].mean()),
+        float(skin_mask[-border_width:, :].mean()),
+    )
+    has_text_heavy_border = (
+        text_region_ratio >= MIN_FOCUS_TEXT_REGION_RATIO
+        and text_region_count >= MIN_TEXT_LIKE_REGIONS
+        and minimum_border_skin_ratio <= MAX_FOCUS_BORDER_SKIN_RATIO
+    )
+    if not has_text_heavy_border:
+        return image.crop(
+            (
+                center_left,
+                center_top,
+                center_left + crop_size,
+                center_top + crop_size,
+            )
+        ).copy()
+
+    default_region = skin_mask[
+        center_top : center_top + crop_size,
+        center_left : center_left + crop_size,
+    ]
+    default_skin_ratio = float(default_region.mean())
+    best_skin_ratio = default_skin_ratio
+    best_score = default_skin_ratio + 0.02
+
+    for scale in FOCUS_CROP_SCALES:
+        candidate_size = max(224, round(crop_size * scale))
+        if candidate_size >= crop_size:
+            continue
+        for left, top in _crop_coordinates(width, height, candidate_size):
+            region = skin_mask[top : top + candidate_size, left : left + candidate_size]
+            skin_ratio = float(region.mean())
+            center_x = left + candidate_size / 2
+            center_y = top + candidate_size / 2
+            center_distance = (
+                abs(center_x - width / 2) / width
+                + abs(center_y - height / 2) / height
+            )
+            score = skin_ratio + (0.02 * scale) - (0.01 * center_distance)
+            if score > best_score:
+                best_score = score
+                best_skin_ratio = skin_ratio
+                best_crop = (left, top, candidate_size)
+
+    if best_skin_ratio < default_skin_ratio + MIN_FOCUS_SKIN_GAIN:
+        best_crop = (center_left, center_top, crop_size)
+
+    left, top, selected_size = best_crop
+    prepared = image.crop((left, top, left + selected_size, top + selected_size))
+    if selected_size != crop_size:
+        prepared = prepared.resize((crop_size, crop_size), Image.Resampling.LANCZOS)
+    return prepared.copy()
 
 
-def _skin_pixel_ratio(rgb: np.ndarray) -> float:
+def _skin_pixel_mask(rgb: np.ndarray) -> np.ndarray:
     hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
     ycrcb = cv2.cvtColor(rgb, cv2.COLOR_RGB2YCrCb)
     channel_range = rgb.max(axis=2).astype(np.int16) - rgb.min(axis=2).astype(np.int16)
@@ -59,7 +136,11 @@ def _skin_pixel_ratio(rgb: np.ndarray) -> float:
         & ((np.maximum.reduce([red, green, blue]) - np.minimum.reduce([red, green, blue])) > 0.04)
         & (red >= blue * 0.75)
     )
-    return float((hsv_mask | ycrcb_mask | broad_rgb_mask).mean())
+    return hsv_mask | ycrcb_mask | broad_rgb_mask
+
+
+def _skin_pixel_ratio(rgb: np.ndarray) -> float:
+    return float(_skin_pixel_mask(rgb).mean())
 
 
 def _text_region_ratio(gray: np.ndarray) -> tuple[float, int]:
@@ -138,7 +219,8 @@ def validate_image(data: bytes, settings: Settings) -> ValidatedImage:
     gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
     brightness = float(gray.mean())
     blur_score = float(cv2.Laplacian(gray, cv2.CV_64F).var())
-    skin_ratio = _skin_pixel_ratio(rgb)
+    skin_mask = _skin_pixel_mask(rgb)
+    skin_ratio = float(skin_mask.mean())
     text_region_ratio, text_region_count = _text_region_ratio(gray)
 
     reason = None
@@ -170,7 +252,12 @@ def validate_image(data: bytes, settings: Settings) -> ValidatedImage:
         text_region_ratio=round(text_region_ratio, 4),
     )
 
-    prepared_image = auto_prepare_image(clean_image)
+    prepared_image = auto_prepare_image(
+        clean_image,
+        skin_mask,
+        text_region_ratio,
+        text_region_count,
+    )
     output = BytesIO()
     prepared_image.save(output, format="JPEG", quality=90, optimize=True)
     return ValidatedImage(prepared_image, output.getvalue(), quality)
