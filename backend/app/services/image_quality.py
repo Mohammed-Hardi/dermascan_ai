@@ -174,21 +174,6 @@ def _text_region_ratio(gray: np.ndarray) -> tuple[float, int]:
     return float(text_area / image_area), text_like_count
 
 
-def _has_text_like_content(
-    region_ratio: float,
-    region_count: int,
-    max_region_ratio: float,
-    skin_ratio: float,
-    min_skin_ratio: float,
-) -> bool:
-    """Reject text structure only when the image also lacks human-skin evidence."""
-    has_repeated_text_structure = (
-        region_ratio > max_region_ratio
-        and region_count >= MIN_TEXT_LIKE_REGIONS
-    )
-    return has_repeated_text_structure and skin_ratio < min_skin_ratio
-
-
 def validate_image(data: bytes, settings: Settings) -> ValidatedImage:
     max_bytes = settings.max_upload_mb * 1024 * 1024
     if not data:
@@ -230,14 +215,6 @@ def validate_image(data: bytes, settings: Settings) -> ValidatedImage:
         reason = "The image is too bright. Avoid flash glare and direct light."
     elif blur_score < settings.blur_threshold:
         reason = "The image appears blurry. Hold the camera steady and retake it."
-    elif _has_text_like_content(
-        text_region_ratio,
-        text_region_count,
-        settings.max_text_region_ratio,
-        skin_ratio,
-        settings.min_skin_ratio,
-    ):
-        reason = "The image appears to be text-only rather than a human skin photo. Upload a clear photo of the affected skin area."
     elif skin_ratio < settings.min_skin_ratio:
         reason = "The image does not appear to contain enough human skin. Upload or crop a clear photo of the affected human skin area only."
 

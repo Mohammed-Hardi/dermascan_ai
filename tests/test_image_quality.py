@@ -6,7 +6,6 @@ from PIL import Image, ImageDraw
 
 from backend.app.config import get_settings
 from backend.app.services.image_quality import (
-    _has_text_like_content,
     _skin_pixel_ratio,
     validate_image,
 )
@@ -41,7 +40,7 @@ def test_backend_auto_center_crops_valid_image() -> None:
     assert result.image.size == (320, 320)
 
 
-def test_rejects_image_with_text() -> None:
+def test_text_only_image_uses_skin_rule_not_text_rule() -> None:
     image = Image.new("RGB", (420, 320), color=(205, 205, 205))
     draw = ImageDraw.Draw(image)
     for row, text in enumerate(["DERMASCAN REPORT", "Patient: Example", "Diagnosis text", "Not a skin photo"]):
@@ -53,7 +52,7 @@ def test_rejects_image_with_text() -> None:
 
     assert result.quality.is_acceptable is False
     assert result.quality.reason is not None
-    assert "text" in result.quality.reason.lower()
+    assert "human skin" in result.quality.reason.lower()
 
 
 def test_accepts_skin_image_with_incidental_text() -> None:
@@ -92,32 +91,6 @@ def test_focus_crop_removes_text_heavy_border() -> None:
     assert result.quality.is_acceptable is True
     assert result.image.size == (420, 420)
     assert prepared_skin_ratio > result.quality.skin_ratio + 0.04
-
-
-def test_text_filter_requires_repeated_text_and_missing_skin() -> None:
-    settings = get_settings()
-
-    assert _has_text_like_content(
-        0.08,
-        3,
-        settings.max_text_region_ratio,
-        0.0,
-        settings.min_skin_ratio,
-    ) is False
-    assert _has_text_like_content(
-        0.08,
-        4,
-        settings.max_text_region_ratio,
-        0.5,
-        settings.min_skin_ratio,
-    ) is False
-    assert _has_text_like_content(
-        0.08,
-        4,
-        settings.max_text_region_ratio,
-        0.0,
-        settings.min_skin_ratio,
-    ) is True
 
 
 def test_neutral_document_background_is_not_skin() -> None:

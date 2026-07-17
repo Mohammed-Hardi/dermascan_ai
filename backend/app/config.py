@@ -18,7 +18,6 @@ class Settings(BaseSettings):
     max_brightness: float = 225.0
     confidence_threshold: float = 0.60
     min_skin_ratio: float = 0.08
-    max_text_region_ratio: float = 0.02
     inference_mode: str = "placeholder"
     allow_smoke_model: bool = False
     model_path: Path = PROJECT_ROOT / "ml" / "outputs" / "models" / "dermascan-acne-scabies-psoriasis-efficientnet-b0.pt"
