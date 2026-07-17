@@ -7,7 +7,7 @@ This document explains the basic structure of the DermaScan AI project and how t
 DermaScan AI is an educational skin screening system. A user uploads or captures a skin image, the backend prepares it automatically, and the system returns a possible class prediction for three supported conditions:
 
 - Acne
-- Eczema
+- Scabies
 - Psoriasis
 
 The project is built with:
@@ -15,7 +15,7 @@ The project is built with:
 - Streamlit for the frontend user interface.
 - FastAPI for the backend API.
 - PyTorch for model training and prediction.
-- A trained custom CNN checkpoint for the three-class skin condition model.
+- A transfer-learned EfficientNet-B0 checkpoint for the three-class skin condition model.
 
 ## 2. Main Folder Structure
 
@@ -78,16 +78,16 @@ Key files include:
 - `ml/src/train.py`: trains the model using the selected YAML config.
 - `ml/src/datasets.py`: loads image paths and labels for training.
 - `ml/src/augmentations.py`: applies image resizing and transformations.
-- `ml/src/evaluate.py`: evaluates the trained model.
-- `ml/configs/custom_cnn_three_class.yaml`: training configuration for the three-class model.
+- `ml/src/evaluate_basic.py`: evaluates the trained model without optional plotting dependencies.
+- `ml/configs/accuracy_target_acne_scabies_psoriasis.yaml`: active three-class training configuration.
 
 The trained checkpoint used by the app is:
 
 ```text
-ml/outputs/models/dermascan-acne-eczema-psoriasis-efficientnet-b0.pt
+ml/outputs/models/dermascan-acne-scabies-psoriasis-efficientnet-b0.pt
 ```
 
-The backend center-crops the skin image, and the model pipeline resizes it to the configured input size, converts it into a tensor, and predicts probabilities for acne, eczema, and psoriasis.
+The backend center-crops the skin image, and the model pipeline resizes it to the configured input size, converts it into a tensor, and predicts probabilities for acne, scabies, and psoriasis.
 
 ## 6. Model Prediction Flow
 

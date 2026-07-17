@@ -13,10 +13,10 @@ from PIL import Image
 API_URL = os.getenv("DERMASCAN_API_URL", "http://127.0.0.1:8000").rstrip("/")
 REQUEST_TIMEOUT = 45
 LOCAL_FALLBACK_ENABLED = os.getenv("DERMASCAN_FRONTEND_FALLBACK", "true").lower() in {"1", "true", "yes"}
-LOCAL_CLASSES = ["acne", "eczema", "psoriasis"]
+LOCAL_CLASSES = ["acne", "scabies", "psoriasis"]
 LOCAL_SCANS: dict[str, dict[str, Any]] = {}
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-LOCAL_CHECKPOINT_PATH = PROJECT_ROOT / "ml" / "outputs" / "models" / "dermascan-acne-eczema-psoriasis-efficientnet-b0.pt"
+LOCAL_CHECKPOINT_PATH = PROJECT_ROOT / "ml" / "outputs" / "models" / "dermascan-acne-scabies-psoriasis-efficientnet-b0.pt"
 LOCAL_METRICS_PATH = PROJECT_ROOT / "results" / "model_metrics.json"
 
 DISCLAIMER = (
@@ -26,7 +26,7 @@ DISCLAIMER = (
 
 EXPLANATIONS = {
     "acne": "The image has visual features that may resemble acne, including blocked or inflamed pores and clustered bump-like patterns.",
-    "eczema": "The image has visual features that may resemble eczema, including dry, itchy, cracked, or inflamed-looking patches.",
+    "scabies": "The image has visual features that may resemble scabies, including small itchy bumps or thin burrow-like lines.",
     "psoriasis": "The image has visual features that may resemble psoriasis, including raised, scaly, or plaque-like patches.",
 }
 

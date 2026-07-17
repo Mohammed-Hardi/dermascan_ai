@@ -96,6 +96,30 @@ The generated three-class split files live under
 python -m ml.src.prepare_three_class_dataset
 ```
 
+## Active acne, scabies, and psoriasis experiment
+
+The deployed experiment combines SCIN and DermNet images for all classes with
+two additional scabies datasets: the Mendeley Scabies Benchmark and
+SkinDisNet. Only original/preprocessed source images are counted as real;
+published augmented folders are excluded. Exact SHA-256 duplicates are removed
+before the seeded, case-grouped split.
+
+| Class | Train | Validation | Test | Real unique total | Cases |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Acne | 689 | 156 | 155 | 1,000 | 940 |
+| Scabies | 649 | 121 | 147 | 917 | 639 |
+| Psoriasis | 703 | 150 | 147 | 1,000 | 881 |
+
+Scabies source composition is 400 Mendeley benchmark images, 343 SkinDisNet
+images, 127 DermNet images, and 47 SCIN images. The Mendeley benchmark is CC BY
+4.0 and SkinDisNet is CC BY-NC 4.0.
+
+The training manifest contains 1,000 samples per class after deterministic
+training-only augmentation. There is zero case overlap and zero exact-hash
+overlap between train, validation, and test splits. DermNet-derived files
+require source-attribution and reuse-rights review before distribution outside
+this academic project.
+
 ## Licence and obligations
 
 SCIN is distributed under the SCIN Data Use Public License. A copy is stored at
@@ -110,8 +134,8 @@ This summary is not a replacement for reading the full licence.
 ## Limitations
 
 - SCIN contributors were located in the United States, not Ghana.
-- Class imbalance is severe, especially for scabies and acne.
-- Forty-seven scabies images are not enough for a reliable final classifier.
+- The active dataset combines sources with different cameras, curation methods,
+  label processes, and population coverage.
 - The `other` class is heterogeneous and requires manual label review.
 - Dermatologist labels are differential/weighted labels, not necessarily
   biopsy-confirmed diagnoses.
@@ -123,7 +147,7 @@ This summary is not a replacement for reading the full licence.
 ## Work required before training
 
 1. Manually audit class mappings and image relevance.
-2. Add a legally usable source for scabies and, preferably, acne.
-3. Manually review a representative sample from every split.
-4. Report skin-tone distributions for every split.
-5. Keep the raw images out of Git and preserve source attribution.
+2. Obtain dermatologist review of a representative sample and model errors.
+3. Report skin-tone distributions and class performance by skin-tone group.
+4. Run external validation on data from the intended Ghanaian setting.
+5. Keep raw images out of Git and preserve source attribution.

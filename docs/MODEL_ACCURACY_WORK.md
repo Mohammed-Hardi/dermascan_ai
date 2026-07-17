@@ -1,93 +1,59 @@
 # Model Accuracy Improvement Work
 
-This note records the current model accuracy status and the changes made to support an 80%+ accuracy attempt.
+This note records the active acne, scabies, and psoriasis model and its honest held-out evaluation.
 
-## Current Baseline
-
-The newly retrained checkpoint is:
+## Active Checkpoint
 
 ```text
-ml/outputs/models/dermascan-acne-eczema-psoriasis-efficientnet-b0.pt
+ml/outputs/models/dermascan-acne-scabies-psoriasis-efficientnet-b0.pt
 ```
 
-Saved test metrics in `results/model_metrics.json`:
+The model is EfficientNet-B0. It was initialized from the previous three-class checkpoint, its feature extractor was frozen, and its classification head was fine-tuned for acne, scabies, and psoriasis at `160 x 160` input resolution.
 
-- Accuracy: 87.9%
-- Validation accuracy: 81.5%
-- Weighted F1-score: 87.8%
+## Dataset
 
-The current class recalls from `results/classification_report.csv` are:
+| Class | Real unique total | Real train | Validation | Test | Generated train samples |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Acne | 1,000 | 689 | 156 | 155 | 1,000 |
+| Scabies | 917 | 649 | 121 | 147 | 1,000 |
+| Psoriasis | 1,000 | 703 | 150 | 147 | 1,000 |
 
-- Acne recall: 86.0%
-- Eczema recall: 96.1%
-- Psoriasis recall: 81.3%
+Training-only augmentation balances the manifest to 1,000 samples per class.
+Validation and test images remain original. Source case or patient identifiers
+are grouped into one partition, and there is zero exact SHA-256 overlap among
+partitions.
 
-This clears the project target of 80%+ test accuracy on the held-out test split.
+## Results
 
-## Dataset Status
+- Test accuracy: **85.30%** (`383/449` correct)
+- Validation accuracy: **86.42%**
+- Weighted F1-score: **85.24%**
+- Macro F1-score: **85.14%**
+- Expected calibration error: **3.35%**
 
-The balanced training split contains:
+| Class | Precision | Recall | F1 | Test support |
+| --- | ---: | ---: | ---: | ---: |
+| Acne | 88.34% | 92.90% | 90.57% | 155 |
+| Scabies | 86.52% | 82.99% | 84.72% | 147 |
+| Psoriasis | 80.69% | 79.59% | 80.14% | 147 |
 
-```text
-ml/data/balanced_three_class/train.csv
-```
+All three class F1-scores exceed 80% on this internal held-out test. The largest
+remaining confusion is between scabies and psoriasis: 19 scabies images were
+classified as psoriasis, and 17 psoriasis images were classified as scabies.
+This model remains an academic screening prototype, not a clinically validated
+diagnostic system.
 
-- Acne: 1000 training images
-- Eczema: 1000 training images
-- Psoriasis: 1000 training images
-
-Validation and test splits are smaller:
-
-- Acne: 150 images
-- Eczema: 154 images
-- Psoriasis: 150 images
-
-## Changes Made
-
-The project now supports torchvision transfer-learning models without requiring `timm`.
-
-Updated file:
-
-```text
-ml/src/models.py
-```
-
-Added support for:
-
-- `torchvision_efficientnet_b0`
-- `torchvision_mobilenet_v2`
-- `torchvision_resnet18`
-- `torchvision_resnet50`
-
-Also fixed stale three-class configs that still referenced `tinea`.
-
-New target config:
-
-```text
-ml/configs/accuracy_target_efficientnet_b0.yaml
-```
-
-This config trains EfficientNet-B0 on acne, eczema, and psoriasis using the balanced dataset.
-
-## Recommended Training Command
-
-Use this command for the 80%+ accuracy attempt:
+## Reproduce
 
 ```powershell
-.\.venv\Scripts\python.exe -m ml.src.train --config ml/configs/accuracy_target_efficientnet_b0.yaml
-```
-
-Then evaluate:
-
-```powershell
-.\.venv\Scripts\python.exe -m ml.src.evaluate `
-  --model ml/outputs/models/dermascan-acne-eczema-psoriasis-efficientnet-b0.pt `
-  --config ml/configs/accuracy_target_efficientnet_b0.yaml `
+python -m ml.src.prepare_balanced_three_class_dataset --images-per-class 1000 --seed 42
+python -m ml.src.train --config ml/configs/accuracy_target_acne_scabies_psoriasis.yaml
+python -m ml.src.evaluate_basic `
+  --model ml/outputs/models/dermascan-acne-scabies-psoriasis-efficientnet-b0.pt `
+  --config ml/configs/accuracy_target_acne_scabies_psoriasis.yaml `
   --split test
 ```
 
-If the new model reaches the target, replace the deployed checkpoint path and update `results/model_metrics.json`.
-
-## Important Note
-
-An 80%+ score cannot be honestly guaranteed by code changes alone. It depends on dataset quality, class separation, training time, and whether pretrained weights are available. The best technical path is transfer learning with EfficientNet-B0 or MobileNet, trained with enough epochs and evaluated on the held-out test split.
+External evaluation on independently collected Ghanaian clinical images and
+dermatologist-led error review are required before making clinical reliability
+claims.

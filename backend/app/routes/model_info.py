@@ -72,6 +72,7 @@ def _load_model_metrics(classes: list[str]) -> dict[str, float | None]:
     reports_dir = PROJECT_ROOT / "ml" / "outputs" / "reports"
     candidate_metric_paths = [
         PROJECT_ROOT / "results" / "model_metrics.json",
+        reports_dir / "acne_scabies_psoriasis" / "evaluation_metrics.json",
         reports_dir / "acne_eczema_psoriasis" / "evaluation_metrics.json",
         reports_dir / "evaluation_metrics.json",
         reports_dir / "three_class" / "evaluation_metrics.json",
@@ -81,7 +82,7 @@ def _load_model_metrics(classes: list[str]) -> dict[str, float | None]:
         if metrics is not None:
             return metrics
 
-    training_metrics = _read_training_metrics(reports_dir / "acne_eczema_psoriasis" / "training_log.csv")
+    training_metrics = _read_training_metrics(reports_dir / "acne_scabies_psoriasis" / "training_log.csv")
     return training_metrics or empty_metrics
 
 

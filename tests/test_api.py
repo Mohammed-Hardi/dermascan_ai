@@ -11,7 +11,7 @@ def test_model_info_marks_placeholder(client) -> None:
     assert payload["is_placeholder"] is True
     assert payload["inference_mode"] == "placeholder"
     assert payload["model_available"] is True
-    assert payload["classes"] == ["acne", "eczema", "tinea", "scabies", "psoriasis", "other"]
+    assert payload["classes"] == ["acne", "scabies", "psoriasis"]
 
 
 def test_predict_and_download_report(client, valid_image_bytes) -> None:

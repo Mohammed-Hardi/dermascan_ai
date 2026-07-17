@@ -1,15 +1,45 @@
 {
   "model_name": "torchvision_efficientnet_b0",
-  "checkpoint": "ml/outputs/models/dermascan-acne-eczema-psoriasis-efficientnet-b0.pt",
+  "checkpoint": "ml/outputs/models/dermascan-acne-scabies-psoriasis-efficientnet-b0.pt",
   "class_names": [
     "acne",
-    "eczema",
+    "scabies",
     "psoriasis"
   ],
   "split": "test",
-  "sample_count": 454,
-  "accuracy": 0.8788546255506607,
-  "validation_accuracy": 0.814978,
-  "weighted_f1": 0.8779877128293765,
-  "source_note": "Fresh evaluation from the retrained acne, eczema, and psoriasis EfficientNet-B0 checkpoint."
+  "sample_count": 449,
+  "accuracy": 0.8530066815144766,
+  "validation_accuracy": 0.8641686182669789,
+  "weighted_f1": 0.8523839532744909,
+  "macro_f1": 0.8514174875314705,
+  "expected_calibration_error": 0.03352873720942205,
+  "per_class": {
+    "acne": {
+      "precision": 0.8834355828220859,
+      "recall_sensitivity": 0.9290322580645162,
+      "specificity": 0.935374149659864,
+      "f1_score": 0.9056603773584907,
+      "support": 155
+    },
+    "scabies": {
+      "precision": 0.8652482269503546,
+      "recall_sensitivity": 0.8299319727891157,
+      "specificity": 0.9370860927152318,
+      "f1_score": 0.8472222222222222,
+      "support": 147
+    },
+    "psoriasis": {
+      "precision": 0.8068965517241379,
+      "recall_sensitivity": 0.7959183673469388,
+      "specificity": 0.9072847682119205,
+      "f1_score": 0.8013698630136987,
+      "support": 147
+    }
+  },
+  "confusion_matrix": [
+    [144, 2, 9],
+    [6, 122, 19],
+    [13, 17, 117]
+  ],
+  "source_note": "Final held-out evaluation on 449 real images. Splits are grouped by source case or patient and have zero exact SHA-256 overlap. No test images or augmented copies were used for training."
 }

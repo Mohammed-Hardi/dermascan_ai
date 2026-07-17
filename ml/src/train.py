@@ -86,6 +86,20 @@ def compute_class_weights(labels: list[int], num_classes: int) -> torch.Tensor:
     return torch.tensor(weights, dtype=torch.float32)
 
 
+def freeze_feature_extractor(model: nn.Module) -> int:
+    """Freeze a transfer-learning backbone and leave its classification head trainable."""
+    for parameter in model.parameters():
+        parameter.requires_grad = False
+    trainable_parameters = 0
+    for name, parameter in model.named_parameters():
+        if name.startswith(("classifier.", "fc.", "head.")):
+            parameter.requires_grad = True
+            trainable_parameters += parameter.numel()
+    if trainable_parameters == 0:
+        raise ValueError("Could not identify a trainable classification head for this model.")
+    return trainable_parameters
+
+
 def build_dataloaders(config: dict[str, Any]) -> tuple[DataLoader, DataLoader, SkinConditionDataset]:
     input_size = int(config["input_size"])
     train_dataset = SkinConditionDataset(
@@ -179,13 +193,22 @@ def train(config: dict[str, Any], smoke_test: bool = False) -> Path:
         int(active_config["num_classes"]),
         bool(active_config.get("pretrained", True)),
     ).to(device)
+    initial_checkpoint = active_config.get("initial_checkpoint")
+    if initial_checkpoint and not smoke_test:
+        initial_path = PROJECT_ROOT / str(initial_checkpoint)
+        checkpoint = torch.load(initial_path, map_location=device, weights_only=False)
+        model.load_state_dict(checkpoint["model_state_dict"])
+        print(f"Initialized model weights from {initial_path}")
+    if active_config.get("freeze_backbone", False) and not smoke_test:
+        trainable_parameters = freeze_feature_extractor(model)
+        print(f"Frozen feature extractor; training {trainable_parameters:,} head parameters")
 
     class_weights = None
     if active_config.get("use_class_weights", True):
         class_weights = compute_class_weights(train_dataset.labels, int(active_config["num_classes"])).to(device)
     criterion = nn.CrossEntropyLoss(weight=class_weights)
     optimizer = AdamW(
-        model.parameters(),
+        (parameter for parameter in model.parameters() if parameter.requires_grad),
         lr=float(active_config["learning_rate"]),
         weight_decay=float(active_config.get("weight_decay", 0.0)),
     )

@@ -17,10 +17,10 @@ SUMMARIES = {
         "and may show blackheads, whiteheads, pimples, oily skin, or scarring. The AI is looking at visible texture, "
         "color change, and clustered bump-like patterns, but it cannot confirm the cause from an image alone."
     ),
-    "eczema": (
-        "The image has visual features that may resemble eczema or dermatitis. Eczema often involves dry, itchy, "
-        "inflamed, cracked, or irritated skin and can look different across skin tones. The AI is mainly comparing "
-        "surface dryness, redness or darkening, scaling, and patch-like inflammation."
+    "scabies": (
+        "The image has visual features that may resemble scabies. Scabies commonly causes intense itching and small "
+        "bumps or thin burrow-like lines, often around the fingers, wrists, waist, or other skin folds. An image alone "
+        "cannot confirm an infestation because eczema, bites, and other rashes may look similar."
     ),
     "psoriasis": (
         "The image has visual features that may resemble psoriasis. Psoriasis can cause raised, scaly, itchy, "
@@ -36,9 +36,10 @@ NEXT_STEPS = {
         "widespread, scarring, or not improving. A clinician may recommend topical treatments such as benzoyl peroxide, "
         "retinoids, or other medicines depending on severity."
     ),
-    "eczema": (
-        "Avoid known irritants, keep the skin moisturized, and seek medical advice if itching, cracking, oozing, or sleep "
-        "disturbance continues. A clinician can check for infection and may recommend anti-inflammatory treatment."
+    "scabies": (
+        "Avoid close skin contact or sharing clothing and bedding until a qualified clinician reviews the rash. Seek "
+        "medical advice promptly if several household members are itching, symptoms are worse at night, or the rash is "
+        "spreading. Effective treatment requires professional confirmation and treatment of close contacts when advised."
     ),
     "psoriasis": (
         "Avoid scratching or picking scales, note possible triggers such as stress or skin injury, and consult a clinician "

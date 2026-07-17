@@ -1,83 +1,66 @@
 # DermaScan AI Model Card
 
-## Current status
+## Current Model
 
-A three-class custom CNN baseline has been trained on the local SCIN-derived
-dataset for eczema, tinea, and psoriasis. This is an academic demonstration
-checkpoint, not a clinically validated model.
+The active checkpoint is `ml/outputs/models/dermascan-acne-scabies-psoriasis-efficientnet-b0.pt`. It is a transfer-learned EfficientNet-B0 classifier with three outputs: acne, scabies, and psoriasis. The model consumes `160 x 160` RGB images.
 
-The checkpoint is stored at
-`ml/outputs/models/dermascan-three-class-custom-cnn.pt`. It completed 12 CPU
-training epochs. The best checkpoint was selected by validation loss.
+It is an academic final-year project checkpoint, not a clinically validated diagnostic model.
 
-Test-set performance is weak and must not be presented as medical reliability:
+## Training and Evaluation
 
-- Accuracy: 0.3913
-- Macro F1-score: 0.2905
-- Weighted F1-score: 0.4375
-- Macro ROC-AUC: 0.4783
-- Expected calibration error: 0.0572
+The final run warm-started the existing EfficientNet-B0 checkpoint and trained
+its 3,843-parameter classifier head for eight CPU epochs. Training used 1,000
+samples per class, balanced with deterministic augmentation. Augmentation was
+restricted to training.
 
-The older EfficientNet smoke-test checkpoint still exists only to prove that the
-pipeline executes; it must not be reported as research performance.
+Evaluation used 449 untouched real images. Splits are grouped by source case or
+patient, with zero case overlap and zero exact SHA-256 overlap among training,
+validation, and test data. The checkpoint was selected by lowest validation
+loss at epoch 3; the test split was evaluated after model selection.
 
-## Intended model
+- Test accuracy: 85.30%
+- Validation accuracy: 86.42%
+- Weighted F1-score: 85.24%
+- Macro F1-score: 85.14%
+- Expected calibration error (10 bins): 3.35%
+- Checkpoint size: 15.6 MB
+- Local CPU latency: approximately 110 ms per image (20-run single-image test)
 
-- Current baseline architecture: custom CNN
-- Candidate architecture for stronger future training: EfficientNet-B0
-- Comparison models: MobileNetV2, ResNet50, custom CNN
-- Current baseline classes: eczema, tinea, psoriasis
-- Input: 160 x 160 RGB image for the custom CNN baseline
-- Training approach: supervised image classification with class-weighted loss
-- Loss: class-weighted cross entropy
-- Optimizer: AdamW
-- Scheduler: cosine annealing
-- Selection criterion: validation loss with early stopping
+| Class | Precision | Recall | F1 | Test images |
+| --- | ---: | ---: | ---: | ---: |
+| Acne | 88.34% | 92.90% | 90.57% | 155 |
+| Scabies | 86.52% | 82.99% | 84.72% | 147 |
+| Psoriasis | 80.69% | 79.59% | 80.14% | 147 |
 
-## Intended use
+## Intended Use
 
-The eventual model is intended for academic research, education, and early
-screening support. It may present visually similar condition categories and
-uncertainty to encourage appropriate professional follow-up.
+- Academic research and demonstration
+- Educational skin-screening support
+- Showing possible visual categories with uncertainty and safety guidance
 
-## Not intended use
+## Prohibited Use
 
-- Clinical diagnosis
-- Medication or treatment prescription
+- Clinical diagnosis or treatment prescription
 - Emergency triage
 - Autonomous medical decisions
 - Replacement for a qualified healthcare professional
 
 ## Dataset
 
-The current SCIN subset and grouped splits are documented in
-`docs/DATASET_CARD.md`. The three-class baseline uses 1,544 total images:
+The curated pool contains 2,917 unique real images: 1,000 acne, 917 scabies,
+and 1,000 psoriasis. It represents 940 acne cases, 639 scabies cases, and 881
+psoriasis cases based on available source identifiers. The balanced training
+manifest has 1,000 samples per class, but augmented copies are not new patients
+or new clinical cases.
 
-- Eczema: 1,028 total, 725 train
-- Tinea: 292 total, 204 train
-- Psoriasis: 224 total, 158 train
+## Limitations
 
-The model must not be presented as Ghana-ready without additional evaluation on
-representative Ghanaian skin tones and phone-camera images.
+- Source data are not representative of the Ghanaian population.
+- Labels and photographic protocols vary across SCIN, DermNet, the Mendeley
+  scabies benchmark, and SkinDisNet.
+- Some DermNet filenames provide class labels but not patient identifiers; each
+  such file is conservatively treated as a separate case.
+- No external clinical validation or dermatologist-led error review has been completed.
+- Image-only classification cannot use symptoms, examination findings, or laboratory confirmation.
 
-## Required evaluation before release
-
-- Accuracy
-- Macro precision, recall, and F1-score
-- Weighted F1-score
-- Per-class precision, sensitivity, specificity, and F1-score
-- Top-three accuracy
-- Confusion matrix
-- One-vs-rest ROC-AUC where each class has positive and negative examples
-- Expected calibration error
-- Skin-tone subgroup analysis
-- Error review by qualified domain experts
-
-## Current limitations
-
-- No production-candidate transfer-learning run has been completed.
-- The current custom CNN baseline has poor test performance.
-- No clinically validated external test set is available.
-- The source dataset was collected in the United States rather than Ghana.
-- Class imbalance remains substantial.
-- Image-only classification cannot incorporate the full clinical context.
+The interface must continue to state that every result is educational and not a diagnosis.

@@ -23,7 +23,7 @@ from frontend.styles import apply_styles
 
 
 ASSET_DIR = PROJECT_ROOT / "frontend" / "assets"
-SUPPORTED_CLASSES = ["acne", "eczema", "psoriasis"]
+SUPPORTED_CLASSES = ["acne", "scabies", "psoriasis"]
 
 DISCLAIMER = (
     "The scan result is not a diagnosis. For accurate diagnosis and treatment "
@@ -32,7 +32,7 @@ DISCLAIMER = (
 
 DISEASE_DESCRIPTIONS = {
     "acne": "Acne may show blocked or inflamed pores, blackheads, whiteheads, pimples, oily skin, or scarring. The AI compares visible bump patterns and texture, but a clinician must confirm the cause.",
-    "eczema": "Eczema may show dry, itchy, cracked, irritated, or inflamed patches. The AI compares dryness, scaling, redness or darkening, and patch-like irritation across skin tones.",
+    "scabies": "Scabies may show small itchy bumps or thin burrow-like lines, often around fingers, wrists, the waist, or skin folds. A clinician must confirm it because several rashes can look similar.",
     "psoriasis": "Psoriasis may show raised, scaly, itchy, or inflamed plaques. The AI compares scale, plaque-like texture, and clearly bounded patch patterns.",
 }
 
@@ -569,7 +569,7 @@ def render_result() -> None:
     explanation = result["explanation"]
     if top is None:
         explanation = {
-            "summary": "The result does not match the active three-class model. Please scan again with the current Acne, Eczema, and Psoriasis model.",
+            "summary": "The result does not match the active three-class model. Please scan again with the current Acne, Scabies, and Psoriasis model.",
             "next_steps": "Clear the old result and upload a fresh human skin image for analysis.",
             "warning": URGENT_WARNING,
         }

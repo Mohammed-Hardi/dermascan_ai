@@ -24,8 +24,12 @@ def test_strips_to_rgb_jpeg(valid_image_bytes) -> None:
 
 
 def test_backend_auto_center_crops_valid_image() -> None:
+    randomizer = np.random.default_rng(24)
+    base = np.array([180, 120, 95], dtype=np.int16)
+    noise = randomizer.integers(-18, 19, size=(320, 420, 3), dtype=np.int16)
+    pixels = np.clip(base + noise, 0, 255).astype(np.uint8)
     output = BytesIO()
-    Image.new("RGB", (420, 320), color=(180, 120, 95)).save(output, format="JPEG", quality=92)
+    Image.fromarray(pixels).save(output, format="JPEG", quality=92)
 
     result = validate_image(output.getvalue(), get_settings())
 

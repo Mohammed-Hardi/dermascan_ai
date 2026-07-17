@@ -12,7 +12,7 @@ from backend.app.schemas import PredictionItem
 from ml.src.augmentations import build_eval_transform
 
 
-CLASS_NAMES = ["acne", "eczema", "psoriasis"]
+CLASS_NAMES = ["acne", "scabies", "psoriasis"]
 
 
 @dataclass(slots=True)

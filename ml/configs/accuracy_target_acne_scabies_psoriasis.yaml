@@ -1,0 +1,35 @@
+project_name: dermascan-ai
+model_name: torchvision_efficientnet_b0
+checkpoint_name: dermascan-acne-scabies-psoriasis-efficientnet-b0.pt
+num_classes: 3
+class_names: [acne, scabies, psoriasis]
+input_size: 160
+batch_size: 32
+epochs: 8
+learning_rate: 0.0005
+weight_decay: 0.0002
+early_stopping_patience: 6
+use_class_weights: true
+pretrained: false
+freeze_backbone: true
+initial_checkpoint: ml/outputs/models/dermascan-acne-scabies-psoriasis-efficientnet-b0.pt
+num_workers: 0
+seed: 42
+data:
+  train_csv: ml/data/balanced_acne_scabies_psoriasis/train.csv
+  val_csv: ml/data/balanced_acne_scabies_psoriasis/val.csv
+  test_csv: ml/data/balanced_acne_scabies_psoriasis/test.csv
+outputs:
+  model_dir: ml/outputs/models
+  report_dir: ml/outputs/reports/acne_scabies_psoriasis
+  plot_dir: ml/outputs/plots/acne_scabies_psoriasis
+augmentations:
+  crop_scale: [0.72, 1.0]
+  horizontal_flip_probability: 0.5
+  rotation_degrees: 16
+  color_jitter:
+    brightness: 0.18
+    contrast: 0.18
+    saturation: 0.14
+    hue: 0.02
+  blur_probability: 0.06

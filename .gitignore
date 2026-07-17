@@ -7,10 +7,13 @@ ml/data/processed/
 ml/data/splits/
 ml/data/splits_three_class/
 ml/data/balanced_three_class/
+ml/data/splits_acne_scabies_psoriasis/
+ml/data/balanced_acne_scabies_psoriasis/
 
 # Python
 .venv/
 .python/
+.training_deps/
 .downloads/
 __pycache__/
 *.py[cod]
@@ -33,4 +36,5 @@ ml/outputs/*
 ml/outputs/models/*
 !ml/outputs/models/dermascan-acne-eczema-psoriasis-custom-cnn.pt
 !ml/outputs/models/dermascan-acne-eczema-psoriasis-efficientnet-b0.pt
+!ml/outputs/models/dermascan-acne-scabies-psoriasis-efficientnet-b0.pt
 .runtime/
