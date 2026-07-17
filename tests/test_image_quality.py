@@ -5,7 +5,11 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 from backend.app.config import get_settings
-from backend.app.services.image_quality import _has_text_like_content, validate_image
+from backend.app.services.image_quality import (
+    _has_text_like_content,
+    _skin_pixel_ratio,
+    validate_image,
+)
 
 
 def test_rejects_small_image() -> None:
@@ -52,11 +56,53 @@ def test_rejects_image_with_text() -> None:
     assert "text" in result.quality.reason.lower()
 
 
-def test_text_filter_requires_repeated_text_like_regions() -> None:
+def test_accepts_skin_image_with_incidental_text() -> None:
+    randomizer = np.random.default_rng(84)
+    base = np.array([176, 126, 98], dtype=np.int16)
+    noise = randomizer.integers(-18, 19, size=(320, 420, 3), dtype=np.int16)
+    pixels = np.clip(base + noise, 0, 255).astype(np.uint8)
+    image = Image.fromarray(pixels)
+    draw = ImageDraw.Draw(image)
+    for row, text in enumerate(["camera date", "clinic", "sample", "skin photo"]):
+        draw.text((24, 35 + row * 52), text, fill=(5, 5, 5))
+    output = BytesIO()
+    image.save(output, format="JPEG", quality=92)
+
+    result = validate_image(output.getvalue(), get_settings())
+
+    assert result.quality.is_acceptable is True
+
+
+def test_text_filter_requires_repeated_text_and_missing_skin() -> None:
     settings = get_settings()
 
-    assert _has_text_like_content(0.08, 3, settings.max_text_region_ratio) is False
-    assert _has_text_like_content(0.08, 4, settings.max_text_region_ratio) is True
+    assert _has_text_like_content(
+        0.08,
+        3,
+        settings.max_text_region_ratio,
+        0.0,
+        settings.min_skin_ratio,
+    ) is False
+    assert _has_text_like_content(
+        0.08,
+        4,
+        settings.max_text_region_ratio,
+        0.5,
+        settings.min_skin_ratio,
+    ) is False
+    assert _has_text_like_content(
+        0.08,
+        4,
+        settings.max_text_region_ratio,
+        0.0,
+        settings.min_skin_ratio,
+    ) is True
+
+
+def test_neutral_document_background_is_not_skin() -> None:
+    image = np.full((320, 420, 3), 205, dtype=np.uint8)
+
+    assert _skin_pixel_ratio(image) == 0.0
 
 
 def test_rejects_non_skin_image() -> None:

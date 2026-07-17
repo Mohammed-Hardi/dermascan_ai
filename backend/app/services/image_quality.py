@@ -32,9 +32,12 @@ def auto_prepare_image(image: Image.Image) -> Image.Image:
 def _skin_pixel_ratio(rgb: np.ndarray) -> float:
     hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
     ycrcb = cv2.cvtColor(rgb, cv2.COLOR_RGB2YCrCb)
+    channel_range = rgb.max(axis=2).astype(np.int16) - rgb.min(axis=2).astype(np.int16)
 
     # Broad skin-color masks are used only as an input-quality guard. They are
     # intentionally permissive to support different skin tones and lighting.
+    # The channel-range condition keeps neutral paper and screenshots from
+    # passing the YCrCb mask simply because gray has centered chroma values.
     hsv_mask = (
         (hsv[:, :, 0] <= 35)
         & (hsv[:, :, 1] >= 20)
@@ -45,6 +48,7 @@ def _skin_pixel_ratio(rgb: np.ndarray) -> float:
         & (ycrcb[:, :, 1] <= 190)
         & (ycrcb[:, :, 2] >= 65)
         & (ycrcb[:, :, 2] <= 145)
+        & (channel_range >= 8)
     )
     normalized = rgb.astype(np.float32) / 255.0
     red, green, blue = normalized[:, :, 0], normalized[:, :, 1], normalized[:, :, 2]
@@ -89,9 +93,19 @@ def _text_region_ratio(gray: np.ndarray) -> tuple[float, int]:
     return float(text_area / image_area), text_like_count
 
 
-def _has_text_like_content(region_ratio: float, region_count: int, max_region_ratio: float) -> bool:
-    """Reject only when several detected regions form a strong text-like pattern."""
-    return region_ratio > max_region_ratio and region_count >= MIN_TEXT_LIKE_REGIONS
+def _has_text_like_content(
+    region_ratio: float,
+    region_count: int,
+    max_region_ratio: float,
+    skin_ratio: float,
+    min_skin_ratio: float,
+) -> bool:
+    """Reject text structure only when the image also lacks human-skin evidence."""
+    has_repeated_text_structure = (
+        region_ratio > max_region_ratio
+        and region_count >= MIN_TEXT_LIKE_REGIONS
+    )
+    return has_repeated_text_structure and skin_ratio < min_skin_ratio
 
 
 def validate_image(data: bytes, settings: Settings) -> ValidatedImage:
@@ -138,8 +152,10 @@ def validate_image(data: bytes, settings: Settings) -> ValidatedImage:
         text_region_ratio,
         text_region_count,
         settings.max_text_region_ratio,
+        skin_ratio,
+        settings.min_skin_ratio,
     ):
-        reason = "The image contains text-like content. Upload a clear photo of human skin without visible words or text overlays."
+        reason = "The image appears to be text-only rather than a human skin photo. Upload a clear photo of the affected skin area."
     elif skin_ratio < settings.min_skin_ratio:
         reason = "The image does not appear to contain enough human skin. Upload or crop a clear photo of the affected human skin area only."
 
